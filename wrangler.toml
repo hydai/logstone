@@ -1,0 +1,11 @@
+name = "nodestone-worker"
+main = "src/index.ts"
+compatibility_date = "2025-01-06"
+
+[[kv_namespaces]]
+binding = "LOGSTONE"
+id = "76b5db6b84a24971842991318b448a24"
+
+# 環境變數
+[vars]
+CACHE_TTL = "86400" # 24 hours in seconds
