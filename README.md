@@ -81,3 +81,7 @@ yarn dev
 - HTML 解析使用簡化版本，部分複雜欄位可能無法正確解析
 - 僅支援北美資料中心的角色查詢
 - CORS 限制：只允許來自 `https://ff14.tw`、`https://www.ff14.tw` 和 `http://localhost:3000`（開發用）的請求
+
+## CSS Selectors 來源
+
+本專案使用的 CSS selectors 來自：https://github.com/xivapi/lodestone-css-selectors
