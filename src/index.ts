@@ -14,6 +14,11 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     
+    // 檢查請求來源是否被允許
+    if (!isRequestAllowed(request)) {
+      return new Response('Forbidden', { status: 403 });
+    }
+    
     // 處理 CORS preflight 請求
     if (request.method === 'OPTIONS') {
       return handleCORS(request);
@@ -95,6 +100,38 @@ function parseCharacterHTML(html: string, characterId: string): any {
   return parser.parse(html);
 }
 
+// 檢查請求是否來自允許的來源
+function isRequestAllowed(request: Request): boolean {
+  const origin = request.headers.get('Origin');
+  const referer = request.headers.get('Referer');
+  
+  // 允許的來源域名
+  const allowedDomains = ['ff14.tw'];
+  
+  // 檢查 Origin header
+  if (origin) {
+    const originUrl = new URL(origin);
+    return allowedDomains.some(domain => 
+      originUrl.hostname === domain || originUrl.hostname.endsWith(`.${domain}`)
+    );
+  }
+  
+  // 檢查 Referer header
+  if (referer) {
+    try {
+      const refererUrl = new URL(referer);
+      return allowedDomains.some(domain => 
+        refererUrl.hostname === domain || refererUrl.hostname.endsWith(`.${domain}`)
+      );
+    } catch {
+      return false;
+    }
+  }
+  
+  // 如果沒有 Origin 或 Referer，拒絕請求
+  return false;
+}
+
 // CORS 處理函數
 function getAllowedOrigin(request: Request): string | null {
   const origin = request.headers.get('Origin');
@@ -103,7 +140,6 @@ function getAllowedOrigin(request: Request): string | null {
   const allowedOrigins = [
     'https://ff14.tw',
     'https://www.ff14.tw',
-    'http://localhost:3000', // 本地開發（可選）
   ];
   
   if (origin && allowedOrigins.includes(origin)) {
