@@ -1,4 +1,5 @@
 import { CharacterParser } from './parsers/character-parser';
+import { ClassJobParser } from './parsers/classjob-parser';
 
 export interface Env {
   LOGSTONE: KVNamespace;
@@ -24,52 +25,99 @@ export default {
       return handleCORS(request);
     }
     
-    // 只處理 /character/:id 路徑
-    const match = url.pathname.match(/^\/character\/(\d+)$/);
-    if (!match) {
+    // 處理不同的路徑
+    const characterMatch = url.pathname.match(/^\/character\/(\d+)$/);
+    const classJobMatch = url.pathname.match(/^\/character\/(\d+)\/classjob$/);
+    
+    if (characterMatch) {
+      return handleCharacterRequest(characterMatch[1], request, env);
+    } else if (classJobMatch) {
+      return handleClassJobRequest(classJobMatch[1], request, env);
+    } else {
       return new Response('Not Found', { status: 404 });
-    }
-
-    const characterId = match[1];
-    const cacheKey = `character:${characterId}`;
-
-    try {
-      // 嘗試從 KV 快取取得資料
-      const cached = await env.LOGSTONE.get(cacheKey);
-      if (cached) {
-        const cacheEntry: CacheEntry = JSON.parse(cached);
-        const now = Date.now();
-        const ttl = parseInt(env.CACHE_TTL || '86400') * 1000; // 轉換為毫秒
-
-        // 檢查快取是否過期
-        if (now - cacheEntry.timestamp < ttl) {
-          return createResponse(JSON.stringify(cacheEntry.data), request, 'HIT');
-        }
-      }
-
-      // 快取未命中或已過期，從 Lodestone 取得資料
-      const characterData = await fetchCharacterData(characterId);
-
-      // 儲存到 KV 快取
-      const cacheEntry: CacheEntry = {
-        data: characterData,
-        timestamp: Date.now()
-      };
-      await env.LOGSTONE.put(cacheKey, JSON.stringify(cacheEntry));
-
-      return createResponse(JSON.stringify(characterData), request, 'MISS');
-
-    } catch (error) {
-      console.error('Error:', error);
-      return createResponse(
-        JSON.stringify({ error: 'Internal Server Error' }), 
-        request, 
-        null, 
-        500
-      );
     }
   }
 };
+
+async function handleCharacterRequest(characterId: string, request: Request, env: Env): Promise<Response> {
+  const cacheKey = `character:${characterId}`;
+
+  try {
+    // 嘗試從 KV 快取取得資料
+    const cached = await env.LOGSTONE.get(cacheKey);
+    if (cached) {
+      const cacheEntry: CacheEntry = JSON.parse(cached);
+      const now = Date.now();
+      const ttl = parseInt(env.CACHE_TTL || '86400') * 1000; // 轉換為毫秒
+
+      // 檢查快取是否過期
+      if (now - cacheEntry.timestamp < ttl) {
+        return createResponse(JSON.stringify(cacheEntry.data), request, 'HIT');
+      }
+    }
+
+    // 快取未命中或已過期，從 Lodestone 取得資料
+    const characterData = await fetchCharacterData(characterId);
+
+    // 儲存到 KV 快取
+    const cacheEntry: CacheEntry = {
+      data: characterData,
+      timestamp: Date.now()
+    };
+    await env.LOGSTONE.put(cacheKey, JSON.stringify(cacheEntry));
+
+    return createResponse(JSON.stringify(characterData), request, 'MISS');
+
+  } catch (error) {
+    console.error('Error:', error);
+    return createResponse(
+      JSON.stringify({ error: 'Internal Server Error' }), 
+      request, 
+      null, 
+      500
+    );
+  }
+}
+
+async function handleClassJobRequest(characterId: string, request: Request, env: Env): Promise<Response> {
+  const cacheKey = `classjob:${characterId}`;
+
+  try {
+    // 嘗試從 KV 快取取得資料
+    const cached = await env.LOGSTONE.get(cacheKey);
+    if (cached) {
+      const cacheEntry: CacheEntry = JSON.parse(cached);
+      const now = Date.now();
+      const ttl = parseInt(env.CACHE_TTL || '86400') * 1000; // 轉換為毫秒
+
+      // 檢查快取是否過期
+      if (now - cacheEntry.timestamp < ttl) {
+        return createResponse(JSON.stringify(cacheEntry.data), request, 'HIT');
+      }
+    }
+
+    // 快取未命中或已過期，從 Lodestone 取得資料
+    const classJobData = await fetchClassJobData(characterId);
+
+    // 儲存到 KV 快取
+    const cacheEntry: CacheEntry = {
+      data: classJobData,
+      timestamp: Date.now()
+    };
+    await env.LOGSTONE.put(cacheKey, JSON.stringify(cacheEntry));
+
+    return createResponse(JSON.stringify(classJobData), request, 'MISS');
+
+  } catch (error) {
+    console.error('Error:', error);
+    return createResponse(
+      JSON.stringify({ error: 'Internal Server Error' }), 
+      request, 
+      null, 
+      500
+    );
+  }
+}
 
 async function fetchCharacterData(characterId: string): Promise<any> {
   const url = `https://na.finalfantasyxiv.com/lodestone/character/${characterId}`;
@@ -189,4 +237,27 @@ function createResponse(
   }
   
   return new Response(body, { status, headers });
+}
+
+async function fetchClassJobData(characterId: string): Promise<any> {
+  const url = `https://na.finalfantasyxiv.com/lodestone/character/${characterId}/class_job`;
+  
+  const response = await fetch(url);
+  if (!response.ok) {
+    if (response.status === 404) {
+      throw new Error('Character not found');
+    }
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const html = await response.text();
+  
+  // 解析 HTML 並提取職業資料
+  const parser = new ClassJobParser();
+  const classJobData = parser.parse(html);
+  
+  return {
+    CharacterID: parseInt(characterId),
+    ClassJobs: classJobData
+  };
 }
