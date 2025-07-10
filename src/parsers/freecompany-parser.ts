@@ -63,7 +63,7 @@ export class FreeCompanyParser {
 
     // 解析所有基本欄位
     for (const field in freecompanySelectors) {
-      if (freecompanySelectors.hasOwnProperty(field) && field !== 'default') {
+      if (Object.prototype.hasOwnProperty.call(freecompanySelectors, field) && field !== 'default') {
         try {
           const value = this.extractField(document, (freecompanySelectors as any)[field]);
           if (value !== null && value !== undefined) {
@@ -168,7 +168,7 @@ export class FreeCompanyParser {
     
     // focusSelectors 結構是扁平的，每個鍵是不同的 focus 類型
     for (const focusType in focusSelectors) {
-      if (focusSelectors.hasOwnProperty(focusType) && focusType !== 'default' && focusType !== 'NOT_SPECIFIED') {
+      if (Object.prototype.hasOwnProperty.call(focusSelectors, focusType) && focusType !== 'default' && focusType !== 'NOT_SPECIFIED') {
         const selector = (focusSelectors as any)[focusType];
         
         // 檢查每個 focus 項目的狀態
@@ -197,7 +197,7 @@ export class FreeCompanyParser {
     
     // seekingSelectors 結構也是扁平的，每個鍵是不同的職業類型
     for (const roleType in seekingSelectors) {
-      if (seekingSelectors.hasOwnProperty(roleType) && roleType !== 'default' && roleType !== 'NOT_SPECIFIED') {
+      if (Object.prototype.hasOwnProperty.call(seekingSelectors, roleType) && roleType !== 'default' && roleType !== 'NOT_SPECIFIED') {
         const selector = (seekingSelectors as any)[roleType];
         
         // 檢查每個職業的招募狀態
@@ -225,7 +225,7 @@ export class FreeCompanyParser {
     const reputation: any = {};
     
     for (const gcName in reputationSelectors) {
-      if (reputationSelectors.hasOwnProperty(gcName) && gcName !== 'default') {
+      if (Object.prototype.hasOwnProperty.call(reputationSelectors, gcName) && gcName !== 'default') {
         const value = this.extractField(document, (reputationSelectors as any)[gcName]);
         if (value) {
           reputation[gcName] = value;
@@ -261,7 +261,7 @@ export class FreeCompanyParser {
     // 處理嵌套的選擇器
     const result: any = {};
     for (const key in definition) {
-      if (definition.hasOwnProperty(key) && key !== 'default') {
+      if (Object.prototype.hasOwnProperty.call(definition, key) && key !== 'default') {
         const value = this.extractField(document, definition[key]);
         if (value !== null && value !== undefined) {
           result[key] = value;
