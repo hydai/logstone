@@ -237,6 +237,112 @@ curl https://your-worker.workers.dev/character/123456/achievements?page=1
   - `PageNext`: 下一頁頁碼（如果有）
   - `PagePrev`: 上一頁頁碼（如果有）
 
+### 4. 自由部隊資料
+
+```
+GET https://your-worker.workers.dev/freecompany/{freecompanyId}
+```
+
+範例：
+```bash
+curl https://your-worker.workers.dev/freecompany/123456789
+```
+
+回應格式：
+```json
+{
+  "FreeCompany": {
+    "ID": "123456789",
+    "Name": "Company Name",
+    "Tag": "«TAG»",
+    "Slogan": "Company slogan here",
+    "CrestLayers": [
+      "https://img.finalfantasyxiv.com/lds/pc/global/images/fc/layer/bottom.png",
+      "https://img.finalfantasyxiv.com/lds/pc/global/images/fc/layer/middle.png",
+      "https://img.finalfantasyxiv.com/lds/pc/global/images/fc/layer/top.png"
+    ],
+    "Server": {
+      "World": "Tonberry",
+      "DC": "Elemental"
+    },
+    "GrandCompany": {
+      "Name": "Maelstrom",
+      "Rank": "Rank 8"
+    },
+    "ActiveState": "Active",
+    "Recruitment": "Open",
+    "ActiveMemberCount": "512",
+    "Rank": "8",
+    "Ranking": {
+      "Weekly": "--",
+      "Monthly": "123"
+    },
+    "Formed": "2013-08-27T00:00:00.000Z",
+    "Estate": {
+      "Name": "Estate Name",
+      "Greeting": "Welcome to our estate!",
+      "Plot": "Plot 30, 1st Ward, Mist (Medium)"
+    },
+    "Reputation": {
+      "Maelstrom": "Allied",
+      "OrderoftheTwinAdder": "Neutral",
+      "ImmortalFlames": "Neutral"
+    },
+    "Focus": [
+      "Role-playing",
+      "Leveling",
+      "Casual"
+    ],
+    "Seeking": [
+      "Tank",
+      "Healer",
+      "DPS",
+      "Crafter",
+      "Gatherer"
+    ]
+  }
+}
+```
+
+### 5. 自由部隊成員列表
+
+```
+GET https://your-worker.workers.dev/freecompany/{freecompanyId}/members?page={page}
+```
+
+範例：
+```bash
+curl https://your-worker.workers.dev/freecompany/123456789/members?page=1
+```
+
+回應格式：
+```json
+{
+  "FreeCompanyID": "123456789",
+  "Members": [
+    {
+      "Avatar": "https://img2.finalfantasyxiv.com/f/avatar.jpg",
+      "ID": "987654321",
+      "Name": "Character Name",
+      "FCRank": "Master",
+      "FCRankIcon": "https://img.finalfantasyxiv.com/lds/h/icon.png",
+      "Rank": "Second Storm Lieutenant",
+      "RankIcon": "https://img.finalfantasyxiv.com/lds/h/rank_icon.png",
+      "Server": {
+        "World": "Tonberry",
+        "DC": "Elemental"
+      }
+    }
+  ],
+  "Pagination": {
+    "Page": 1,
+    "PageTotal": 11,
+    "PageNext": 2,
+    "PagePrev": null
+  }
+}
+```
+
 ## 回應標頭
 
 - `X-Cache-Status`: `HIT` (快取命中) 或 `MISS` (快取未命中)

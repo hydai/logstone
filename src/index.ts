@@ -1,6 +1,8 @@
 import { CharacterParser } from './parsers/character-parser';
 import { ClassJobParser } from './parsers/classjob-parser';
 import { AchievementsParser } from './parsers/achievements-parser';
+import { FreeCompanyParser } from './parsers/freecompany-parser';
+import { FreeCompanyMembersParser } from './parsers/freecompany-members-parser';
 
 export interface Env {
   LOGSTONE: KVNamespace;
@@ -30,6 +32,8 @@ export default {
     const characterMatch = url.pathname.match(/^\/character\/(\d+)$/);
     const classJobMatch = url.pathname.match(/^\/character\/(\d+)\/classjob$/);
     const achievementsMatch = url.pathname.match(/^\/character\/(\d+)\/achievements$/);
+    const freecompanyMatch = url.pathname.match(/^\/freecompany\/(\d+)$/);
+    const freecompanyMembersMatch = url.pathname.match(/^\/freecompany\/(\d+)\/members$/);
     
     if (characterMatch) {
       return handleCharacterRequest(characterMatch[1], request, env);
@@ -37,6 +41,10 @@ export default {
       return handleClassJobRequest(classJobMatch[1], request, env);
     } else if (achievementsMatch) {
       return handleAchievementsRequest(achievementsMatch[1], request, env);
+    } else if (freecompanyMatch) {
+      return handleFreeCompanyRequest(freecompanyMatch[1], request, env);
+    } else if (freecompanyMembersMatch) {
+      return handleFreeCompanyMembersRequest(freecompanyMembersMatch[1], request, env);
     } else {
       return new Response('Not Found', { status: 404 });
     }
@@ -328,5 +336,132 @@ async function fetchAchievementsData(characterId: string, page: number = 1): Pro
   return {
     CharacterID: parseInt(characterId),
     ...achievementsData
+  };
+}
+
+async function handleFreeCompanyRequest(freecompanyId: string, request: Request, env: Env): Promise<Response> {
+  const cacheKey = `freecompany:${freecompanyId}`;
+
+  try {
+    // 嘗試從 KV 快取取得資料
+    const cached = await env.LOGSTONE.get(cacheKey);
+    if (cached) {
+      const cacheEntry: CacheEntry = JSON.parse(cached);
+      const now = Date.now();
+      const ttl = parseInt(env.CACHE_TTL || '86400') * 1000; // 轉換為毫秒
+
+      // 檢查快取是否過期
+      if (now - cacheEntry.timestamp < ttl) {
+        return createResponse(JSON.stringify(cacheEntry.data), request, 'HIT');
+      }
+    }
+
+    // 快取未命中或已過期，從 Lodestone 取得資料
+    const freecompanyData = await fetchFreeCompanyData(freecompanyId);
+
+    // 儲存到 KV 快取
+    const cacheEntry: CacheEntry = {
+      data: freecompanyData,
+      timestamp: Date.now()
+    };
+    await env.LOGSTONE.put(cacheKey, JSON.stringify(cacheEntry));
+
+    return createResponse(JSON.stringify(freecompanyData), request, 'MISS');
+
+  } catch (error) {
+    console.error('Error:', error);
+    return createResponse(
+      JSON.stringify({ error: 'Internal Server Error' }), 
+      request, 
+      null, 
+      500
+    );
+  }
+}
+
+async function fetchFreeCompanyData(freecompanyId: string): Promise<any> {
+  const url = `https://na.finalfantasyxiv.com/lodestone/freecompany/${freecompanyId}`;
+  
+  const response = await fetch(url);
+  if (!response.ok) {
+    if (response.status === 404) {
+      throw new Error('Free Company not found');
+    }
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const html = await response.text();
+  
+  // 解析 HTML 並提取 Free Company 資料
+  const parser = new FreeCompanyParser();
+  const freecompanyData = parser.parse(html);
+  
+  return {
+    FreeCompany: freecompanyData
+  };
+}
+
+async function handleFreeCompanyMembersRequest(freecompanyId: string, request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const page = parseInt(url.searchParams.get('page') || '1');
+  const cacheKey = `freecompany:${freecompanyId}:members:page${page}`;
+
+  try {
+    // 嘗試從 KV 快取取得資料
+    const cached = await env.LOGSTONE.get(cacheKey);
+    if (cached) {
+      const cacheEntry: CacheEntry = JSON.parse(cached);
+      const now = Date.now();
+      const ttl = parseInt(env.CACHE_TTL || '86400') * 1000; // 轉換為毫秒
+
+      // 檢查快取是否過期
+      if (now - cacheEntry.timestamp < ttl) {
+        return createResponse(JSON.stringify(cacheEntry.data), request, 'HIT');
+      }
+    }
+
+    // 快取未命中或已過期，從 Lodestone 取得資料
+    const membersData = await fetchFreeCompanyMembersData(freecompanyId, page);
+
+    // 儲存到 KV 快取
+    const cacheEntry: CacheEntry = {
+      data: membersData,
+      timestamp: Date.now()
+    };
+    await env.LOGSTONE.put(cacheKey, JSON.stringify(cacheEntry));
+
+    return createResponse(JSON.stringify(membersData), request, 'MISS');
+
+  } catch (error) {
+    console.error('Error:', error);
+    return createResponse(
+      JSON.stringify({ error: 'Internal Server Error' }), 
+      request, 
+      null, 
+      500
+    );
+  }
+}
+
+async function fetchFreeCompanyMembersData(freecompanyId: string, page: number = 1): Promise<any> {
+  const url = `https://na.finalfantasyxiv.com/lodestone/freecompany/${freecompanyId}/member?page=${page}`;
+  
+  const response = await fetch(url);
+  if (!response.ok) {
+    if (response.status === 404) {
+      throw new Error('Free Company not found');
+    }
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const html = await response.text();
+  
+  // 解析 HTML 並提取成員資料
+  const parser = new FreeCompanyMembersParser();
+  const membersData = parser.parse(html, page);
+  
+  return {
+    FreeCompanyID: freecompanyId,
+    ...membersData
   };
 }
