@@ -24,7 +24,7 @@ export class CharacterParser {
 
   parse(html: string): any {
     const document = parseDocument(html);
-    const result: any = {};
+    let result: any = {};
 
     // Skip problematic selectors that are too broad
     const skipFields = ['CLASSJOB_ICONS'];
@@ -43,6 +43,43 @@ export class CharacterParser {
         }
       }
     }
+
+    // 特殊處理某些複雜的欄位
+    result = this.processSpecialFields(result);
+
+    return result;
+  }
+
+  private processSpecialFields(result: any): any {
+    // 處理 Free Company
+    if (result.FreeCompany?.Name?.ID) {
+      // 根據現有的選擇器，我們只能取得 ID
+      result.FreeCompany = {
+        ID: result.FreeCompany.Name.ID,
+        Crest: [
+          result.FreeCompany.IconLayers?.Bottom || null,
+          result.FreeCompany.IconLayers?.Middle || null,
+          result.FreeCompany.IconLayers?.Top || null
+        ].filter(Boolean)
+      };
+    }
+
+    // 處理 PvP Team  
+    if (result.PvpTeam?.Name?.ID) {
+      // 根據現有的選擇器，我們只能取得 ID
+      result.PvPTeam = {
+        ID: result.PvpTeam.Name.ID,
+        Crest: [
+          result.PvpTeam.IconLayers?.Bottom || null,
+          result.PvpTeam.IconLayers?.Middle || null,
+          result.PvpTeam.IconLayers?.Top || null
+        ].filter(Boolean)
+      };
+      delete result.PvpTeam; // 移除舊的欄位名稱
+    }
+
+    // 處理 Guardian Deity - 保持原有結構
+    // 處理 Town - 保持原有結構
 
     return result;
   }

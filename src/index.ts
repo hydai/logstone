@@ -1,5 +1,6 @@
 import { CharacterParser } from './parsers/character-parser';
 import { ClassJobParser } from './parsers/classjob-parser';
+import { AchievementsParser } from './parsers/achievements-parser';
 
 export interface Env {
   LOGSTONE: KVNamespace;
@@ -28,11 +29,14 @@ export default {
     // 處理不同的路徑
     const characterMatch = url.pathname.match(/^\/character\/(\d+)$/);
     const classJobMatch = url.pathname.match(/^\/character\/(\d+)\/classjob$/);
+    const achievementsMatch = url.pathname.match(/^\/character\/(\d+)\/achievements$/);
     
     if (characterMatch) {
       return handleCharacterRequest(characterMatch[1], request, env);
     } else if (classJobMatch) {
       return handleClassJobRequest(classJobMatch[1], request, env);
+    } else if (achievementsMatch) {
+      return handleAchievementsRequest(achievementsMatch[1], request, env);
     } else {
       return new Response('Not Found', { status: 404 });
     }
@@ -259,5 +263,70 @@ async function fetchClassJobData(characterId: string): Promise<any> {
   return {
     CharacterID: parseInt(characterId),
     ClassJobs: classJobData
+  };
+}
+
+async function handleAchievementsRequest(characterId: string, request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const page = parseInt(url.searchParams.get('page') || '1');
+  const cacheKey = `achievements:${characterId}:page${page}`;
+
+  try {
+    // 嘗試從 KV 快取取得資料
+    const cached = await env.LOGSTONE.get(cacheKey);
+    if (cached) {
+      const cacheEntry: CacheEntry = JSON.parse(cached);
+      const now = Date.now();
+      const ttl = parseInt(env.CACHE_TTL || '86400') * 1000 * 2; // 成就快取時間延長為 48 小時
+
+      // 檢查快取是否過期
+      if (now - cacheEntry.timestamp < ttl) {
+        return createResponse(JSON.stringify(cacheEntry.data), request, 'HIT');
+      }
+    }
+
+    // 快取未命中或已過期，從 Lodestone 取得資料
+    const achievementsData = await fetchAchievementsData(characterId, page);
+
+    // 儲存到 KV 快取
+    const cacheEntry: CacheEntry = {
+      data: achievementsData,
+      timestamp: Date.now()
+    };
+    await env.LOGSTONE.put(cacheKey, JSON.stringify(cacheEntry));
+
+    return createResponse(JSON.stringify(achievementsData), request, 'MISS');
+
+  } catch (error) {
+    console.error('Error:', error);
+    return createResponse(
+      JSON.stringify({ error: 'Internal Server Error' }), 
+      request, 
+      null, 
+      500
+    );
+  }
+}
+
+async function fetchAchievementsData(characterId: string, page: number = 1): Promise<any> {
+  const url = `https://na.finalfantasyxiv.com/lodestone/character/${characterId}/achievement?page=${page}`;
+  
+  const response = await fetch(url);
+  if (!response.ok) {
+    if (response.status === 404) {
+      throw new Error('Character not found');
+    }
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const html = await response.text();
+  
+  // 解析 HTML 並提取成就資料
+  const parser = new AchievementsParser();
+  const achievementsData = parser.parse(html, page);
+  
+  return {
+    CharacterID: parseInt(characterId),
+    ...achievementsData
   };
 }

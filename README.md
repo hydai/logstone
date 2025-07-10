@@ -190,6 +190,53 @@ curl https://your-worker.workers.dev/character/123456/classjob
 - `Name`: 內容名稱（如 Elemental Level、Resistance Rank）
 - `Mettle`: Bozja 專屬的 Mettle 點數
 
+### 3. 成就資料
+
+```
+GET https://your-worker.workers.dev/character/{characterId}/achievements?page={page}
+```
+
+範例：
+```bash
+curl https://your-worker.workers.dev/character/123456/achievements?page=1
+```
+
+回應格式：
+```json
+{
+  "CharacterID": 123456,
+  "Achievements": [
+    {
+      "ID": "2744",
+      "Name": "Tank You, Endwalker III",
+      "Time": "2024-01-15T12:34:56.000Z"
+    }
+  ],
+  "TotalAchievements": 2567,
+  "AchievementPoints": "24530",
+  "Pagination": {
+    "Page": 1,
+    "PageTotal": 52,
+    "PageNext": 2,
+    "PagePrev": null
+  }
+}
+```
+
+#### 成就資料欄位說明
+
+- `Achievements`: 成就列表陣列
+  - `ID`: 成就 ID
+  - `Name`: 成就名稱
+  - `Time`: 取得時間（ISO 8601 格式）
+- `TotalAchievements`: 總成就數量
+- `AchievementPoints`: 成就點數
+- `Pagination`: 分頁資訊
+  - `Page`: 當前頁碼
+  - `PageTotal`: 總頁數
+  - `PageNext`: 下一頁頁碼（如果有）
+  - `PagePrev`: 上一頁頁碼（如果有）
+
 ## 回應標頭
 
 - `X-Cache-Status`: `HIT` (快取命中) 或 `MISS` (快取未命中)
