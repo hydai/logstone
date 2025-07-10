@@ -3,6 +3,8 @@ import { ClassJobParser } from './parsers/classjob-parser';
 import { AchievementsParser } from './parsers/achievements-parser';
 import { FreeCompanyParser } from './parsers/freecompany-parser';
 import { FreeCompanyMembersParser } from './parsers/freecompany-members-parser';
+import { MinionParser } from './parsers/minion-parser';
+import { MountParser } from './parsers/mount-parser';
 
 export interface Env {
   LOGSTONE: KVNamespace;
@@ -34,6 +36,8 @@ export default {
     const achievementsMatch = url.pathname.match(/^\/character\/(\d+)\/achievements$/);
     const freecompanyMatch = url.pathname.match(/^\/freecompany\/(\d+)$/);
     const freecompanyMembersMatch = url.pathname.match(/^\/freecompany\/(\d+)\/members$/);
+    const minionsMatch = url.pathname.match(/^\/character\/(\d+)\/minions$/);
+    const mountsMatch = url.pathname.match(/^\/character\/(\d+)\/mounts$/);
     
     if (characterMatch) {
       return handleCharacterRequest(characterMatch[1], request, env);
@@ -45,6 +49,10 @@ export default {
       return handleFreeCompanyRequest(freecompanyMatch[1], request, env);
     } else if (freecompanyMembersMatch) {
       return handleFreeCompanyMembersRequest(freecompanyMembersMatch[1], request, env);
+    } else if (minionsMatch) {
+      return handleMinionsRequest(minionsMatch[1], request, env);
+    } else if (mountsMatch) {
+      return handleMountsRequest(mountsMatch[1], request, env);
     } else {
       return new Response('Not Found', { status: 404 });
     }
@@ -463,5 +471,131 @@ async function fetchFreeCompanyMembersData(freecompanyId: string, page: number =
   return {
     FreeCompanyID: freecompanyId,
     ...membersData
+  };
+}
+
+async function handleMinionsRequest(characterId: string, request: Request, env: Env): Promise<Response> {
+  const cacheKey = `minions:${characterId}`;
+
+  try {
+    // 嘗試從 KV 快取取得資料
+    const cached = await env.LOGSTONE.get(cacheKey);
+    if (cached) {
+      const cacheEntry: CacheEntry = JSON.parse(cached);
+      const now = Date.now();
+      const ttl = parseInt(env.CACHE_TTL || '86400') * 1000 * 2; // 寵物快取時間延長為 48 小時
+
+      // 檢查快取是否過期
+      if (now - cacheEntry.timestamp < ttl) {
+        return createResponse(JSON.stringify(cacheEntry.data), request, 'HIT');
+      }
+    }
+
+    // 快取未命中或已過期，從 Lodestone 取得資料
+    const minionsData = await fetchMinionsData(characterId);
+
+    // 儲存到 KV 快取
+    const cacheEntry: CacheEntry = {
+      data: minionsData,
+      timestamp: Date.now()
+    };
+    await env.LOGSTONE.put(cacheKey, JSON.stringify(cacheEntry));
+
+    return createResponse(JSON.stringify(minionsData), request, 'MISS');
+
+  } catch (error) {
+    console.error('Error:', error);
+    return createResponse(
+      JSON.stringify({ error: 'Internal Server Error' }), 
+      request, 
+      null, 
+      500
+    );
+  }
+}
+
+async function fetchMinionsData(characterId: string): Promise<any> {
+  const url = `https://na.finalfantasyxiv.com/lodestone/character/${characterId}/minion`;
+  
+  const response = await fetch(url);
+  if (!response.ok) {
+    if (response.status === 404) {
+      throw new Error('Character not found');
+    }
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const html = await response.text();
+  
+  // 解析 HTML 並提取寵物資料
+  const parser = new MinionParser();
+  const minionsData = parser.parse(html);
+  
+  return {
+    CharacterID: parseInt(characterId),
+    ...minionsData
+  };
+}
+
+async function handleMountsRequest(characterId: string, request: Request, env: Env): Promise<Response> {
+  const cacheKey = `mounts:${characterId}`;
+
+  try {
+    // 嘗試從 KV 快取取得資料
+    const cached = await env.LOGSTONE.get(cacheKey);
+    if (cached) {
+      const cacheEntry: CacheEntry = JSON.parse(cached);
+      const now = Date.now();
+      const ttl = parseInt(env.CACHE_TTL || '86400') * 1000 * 2; // 坐騎快取時間延長為 48 小時
+
+      // 檢查快取是否過期
+      if (now - cacheEntry.timestamp < ttl) {
+        return createResponse(JSON.stringify(cacheEntry.data), request, 'HIT');
+      }
+    }
+
+    // 快取未命中或已過期，從 Lodestone 取得資料
+    const mountsData = await fetchMountsData(characterId);
+
+    // 儲存到 KV 快取
+    const cacheEntry: CacheEntry = {
+      data: mountsData,
+      timestamp: Date.now()
+    };
+    await env.LOGSTONE.put(cacheKey, JSON.stringify(cacheEntry));
+
+    return createResponse(JSON.stringify(mountsData), request, 'MISS');
+
+  } catch (error) {
+    console.error('Error:', error);
+    return createResponse(
+      JSON.stringify({ error: 'Internal Server Error' }), 
+      request, 
+      null, 
+      500
+    );
+  }
+}
+
+async function fetchMountsData(characterId: string): Promise<any> {
+  const url = `https://na.finalfantasyxiv.com/lodestone/character/${characterId}/mount`;
+  
+  const response = await fetch(url);
+  if (!response.ok) {
+    if (response.status === 404) {
+      throw new Error('Character not found');
+    }
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const html = await response.text();
+  
+  // 解析 HTML 並提取坐騎資料
+  const parser = new MountParser();
+  const mountsData = parser.parse(html);
+  
+  return {
+    CharacterID: parseInt(characterId),
+    ...mountsData
   };
 }

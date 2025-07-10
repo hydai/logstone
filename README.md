@@ -343,6 +343,70 @@ curl https://your-worker.workers.dev/freecompany/123456789/members?page=1
 }
 ```
 
+### 6. 寵物收集
+
+```
+GET https://your-worker.workers.dev/character/{characterId}/minions
+```
+
+範例：
+```bash
+curl https://your-worker.workers.dev/character/123456/minions
+```
+
+回應格式：
+```json
+{
+  "CharacterID": 123456,
+  "Minions": [
+    {
+      "Name": "Goobbue Sproutling",
+      "Icon": "https://img.finalfantasyxiv.com/lds/pc/global/images/itemicon/minion.png"
+    }
+  ],
+  "Total": 425
+}
+```
+
+#### 寵物資料欄位說明
+
+- `Minions`: 寵物列表陣列
+  - `Name`: 寵物名稱
+  - `Icon`: 寵物圖標 URL
+- `Total`: 擁有的寵物總數
+
+### 7. 坐騎收集
+
+```
+GET https://your-worker.workers.dev/character/{characterId}/mounts
+```
+
+範例：
+```bash
+curl https://your-worker.workers.dev/character/123456/mounts
+```
+
+回應格式：
+```json
+{
+  "CharacterID": 123456,
+  "Mounts": [
+    {
+      "Name": "Company Chocobo",
+      "Icon": "https://img.finalfantasyxiv.com/lds/pc/global/images/itemicon/mount.png"
+    }
+  ],
+  "Total": 218
+}
+```
+
+#### 坐騎資料欄位說明
+
+- `Mounts`: 坐騎列表陣列
+  - `Name`: 坐騎名稱
+  - `Icon`: 坐騎圖標 URL
+- `Total`: 擁有的坐騎總數
+
 ## 回應標頭
 
 - `X-Cache-Status`: `HIT` (快取命中) 或 `MISS` (快取未命中)
