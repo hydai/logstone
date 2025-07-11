@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lodestone Worker API 測試頁面</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: inline-block;
+            width: 150px;
+            font-weight: bold;
+            color: #555;
+        }
+        input {
+            padding: 8px;
+            width: 200px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            max-height: 400px;
+            overflow-y: auto;
+            position: relative;
+        }
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            user-select: text;
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+        }
+        .copy-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #2196F3;
+            color: white;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            z-index: 10;
+        }
+        .copy-button:hover {
+            background-color: #1976D2;
+        }
+        .copy-button.copied {
+            background-color: #4CAF50;
+        }
+        .error {
+            color: #d32f2f;
+            background-color: #ffebee;
+            border-color: #ffcdd2;
+        }
+        .success {
+            color: #388e3c;
+            background-color: #e8f5e9;
+            border-color: #c8e6c9;
+        }
+        .cache-status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .cache-hit {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .cache-miss {
+            background-color: #ff9800;
+            color: white;
+        }
+        .loading {
+            color: #2196F3;
+        }
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e0e0e0;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 16px;
+            color: #666;
+            transition: all 0.3s;
+        }
+        .tab:hover {
+            color: #333;
+        }
+        .tab.active {
+            color: #2196F3;
+            border-bottom: 2px solid #2196F3;
+            margin-bottom: -2px;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .quick-test {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #666;
+        }
+        .quick-test button {
+            padding: 5px 10px;
+            font-size: 12px;
+            background-color: #2196F3;
+        }
+        .quick-test button:hover {
+            background-color: #1976D2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Lodestone Worker API 測試頁面</h1>
+    
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('character')">角色資料</button>
+        <button class="tab" onclick="switchTab('freecompany')">自由部隊</button>
+        <button class="tab" onclick="switchTab('collection')">收藏品</button>
+    </div>
+
+    <!-- 角色資料標籤 -->
+    <div id="character-tab" class="tab-content active">
+        <div class="section">
+            <h2>角色基本資料</h2>
+            <div class="input-group">
+                <label>角色 ID：</label>
+                <input type="text" id="characterId" placeholder="例如：2000000">
+            </div>
+            <button onclick="testCharacter()">取得角色資料</button>
+            <button onclick="testClassJob()">取得職業等級</button>
+            <button onclick="testAchievements()">取得成就資料</button>
+            <div class="quick-test">
+                快速測試：
+                <button onclick="quickTest('character', '2000000')">測試角色 2000000</button>
+                <button onclick="quickTest('character', '39641901')">測試角色 39641901</button>
+            </div>
+            <div id="character-result" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="section">
+            <h2>成就分頁測試</h2>
+            <div class="input-group">
+                <label>角色 ID：</label>
+                <input type="text" id="achievementCharacterId" placeholder="例如：2000000">
+            </div>
+            <div class="input-group">
+                <label>頁碼：</label>
+                <input type="number" id="achievementPage" value="1" min="1">
+            </div>
+            <button onclick="testAchievementsWithPage()">取得指定頁成就</button>
+            <div id="achievement-result" class="result" style="display:none;"></div>
+        </div>
+    </div>
+
+    <!-- 自由部隊標籤 -->
+    <div id="freecompany-tab" class="tab-content">
+        <div class="section">
+            <h2>自由部隊資料</h2>
+            <div class="input-group">
+                <label>自由部隊 ID：</label>
+                <input type="text" id="freecompanyId" placeholder="例如：9232379236109629819">
+            </div>
+            <button onclick="testFreeCompany()">取得部隊資料</button>
+            <button onclick="testFreeCompanyMembers()">取得成員列表</button>
+            <div class="quick-test">
+                快速測試：
+                <button onclick="quickTest('freecompany', '9232379236109629819')">測試 FC 9232379236109629819</button>
+            </div>
+            <div id="freecompany-result" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="section">
+            <h2>成員列表分頁測試</h2>
+            <div class="input-group">
+                <label>自由部隊 ID：</label>
+                <input type="text" id="fcMembersId" placeholder="例如：9232379236109629819">
+            </div>
+            <div class="input-group">
+                <label>頁碼：</label>
+                <input type="number" id="fcMembersPage" value="1" min="1">
+            </div>
+            <button onclick="testFreeCompanyMembersWithPage()">取得指定頁成員</button>
+            <div id="fc-members-result" class="result" style="display:none;"></div>
+        </div>
+    </div>
+
+    <!-- 收藏品標籤 -->
+    <div id="collection-tab" class="tab-content">
+        <div class="section">
+            <h2>寵物 & 坐騎收集</h2>
+            <div class="input-group">
+                <label>角色 ID：</label>
+                <input type="text" id="collectionCharacterId" placeholder="例如：2000000">
+            </div>
+            <button onclick="testMinions()">取得寵物收集</button>
+            <button onclick="testMounts()">取得坐騎收集</button>
+            <div class="quick-test">
+                快速測試：
+                <button onclick="quickTest('minions', '2000000')">測試角色 2000000 寵物</button>
+                <button onclick="quickTest('mounts', '2000000')">測試角色 2000000 坐騎</button>
+            </div>
+            <div id="collection-result" class="result" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8787';
+
+        function switchTab(tabName) {
+            // 隱藏所有標籤內容
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // 移除所有標籤的 active 狀態
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // 顯示選中的標籤內容
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            
+            // 設置選中的標籤為 active
+            event.target.classList.add('active');
+        }
+
+        async function makeRequest(endpoint, resultElementId) {
+            const resultElement = document.getElementById(resultElementId);
+            resultElement.style.display = 'block';
+            resultElement.className = 'result loading';
+            resultElement.innerHTML = '<pre>載入中...</pre>';
+
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`);
+                const data = await response.json();
+                
+                // 取得快取狀態
+                const cacheStatus = response.headers.get('X-Cache-Status');
+                const cacheStatusHtml = cacheStatus ? 
+                    `<span class="cache-status cache-${cacheStatus.toLowerCase()}">${cacheStatus}</span>` : '';
+
+                const jsonString = JSON.stringify(data, null, 2);
+                const resultId = 'result-' + Date.now();
+
+                if (response.ok) {
+                    resultElement.className = 'result success';
+                    resultElement.innerHTML = `
+                        <button class="copy-button" onclick="copyToClipboard('${resultId}', this)">複製</button>
+                        <div>
+                            <strong>成功</strong>${cacheStatusHtml}
+                            <br><small>端點: ${endpoint}</small>
+                        </div>
+                        <pre id="${resultId}">${jsonString}</pre>
+                    `;
+                } else {
+                    resultElement.className = 'result error';
+                    resultElement.innerHTML = `
+                        <button class="copy-button" onclick="copyToClipboard('${resultId}', this)">複製</button>
+                        <div>
+                            <strong>錯誤 ${response.status}</strong>
+                            <br><small>端點: ${endpoint}</small>
+                        </div>
+                        <pre id="${resultId}">${jsonString}</pre>
+                    `;
+                }
+            } catch (error) {
+                const errorId = 'error-' + Date.now();
+                resultElement.className = 'result error';
+                resultElement.innerHTML = `
+                    <button class="copy-button" onclick="copyToClipboard('${errorId}', this)">複製</button>
+                    <pre id="${errorId}">請求失敗: ${error.message}</pre>
+                `;
+            }
+        }
+
+        function copyToClipboard(elementId, button) {
+            const element = document.getElementById(elementId);
+            const text = element.textContent;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                // 顯示複製成功
+                const originalText = button.textContent;
+                button.textContent = '已複製！';
+                button.classList.add('copied');
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                // 如果 clipboard API 失敗，使用傳統方法
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                textArea.style.position = 'fixed';
+                textArea.style.opacity = '0';
+                document.body.appendChild(textArea);
+                textArea.select();
+                
+                try {
+                    document.execCommand('copy');
+                    const originalText = button.textContent;
+                    button.textContent = '已複製！';
+                    button.classList.add('copied');
+                    
+                    setTimeout(() => {
+                        button.textContent = originalText;
+                        button.classList.remove('copied');
+                    }, 2000);
+                } catch (err) {
+                    alert('複製失敗，請手動選取文字複製');
+                }
+                
+                document.body.removeChild(textArea);
+            });
+        }
+
+        // 角色相關測試
+        function testCharacter() {
+            const characterId = document.getElementById('characterId').value;
+            if (!characterId) {
+                alert('請輸入角色 ID');
+                return;
+            }
+            makeRequest(`/character/${characterId}`, 'character-result');
+        }
+
+        function testClassJob() {
+            const characterId = document.getElementById('characterId').value;
+            if (!characterId) {
+                alert('請輸入角色 ID');
+                return;
+            }
+            makeRequest(`/character/${characterId}/classjob`, 'character-result');
+        }
+
+        function testAchievements() {
+            const characterId = document.getElementById('characterId').value;
+            if (!characterId) {
+                alert('請輸入角色 ID');
+                return;
+            }
+            makeRequest(`/character/${characterId}/achievements`, 'character-result');
+        }
+
+        function testAchievementsWithPage() {
+            const characterId = document.getElementById('achievementCharacterId').value;
+            const page = document.getElementById('achievementPage').value;
+            if (!characterId) {
+                alert('請輸入角色 ID');
+                return;
+            }
+            makeRequest(`/character/${characterId}/achievements?page=${page}`, 'achievement-result');
+        }
+
+        // 自由部隊相關測試
+        function testFreeCompany() {
+            const freecompanyId = document.getElementById('freecompanyId').value;
+            if (!freecompanyId) {
+                alert('請輸入自由部隊 ID');
+                return;
+            }
+            makeRequest(`/freecompany/${freecompanyId}`, 'freecompany-result');
+        }
+
+        function testFreeCompanyMembers() {
+            const freecompanyId = document.getElementById('freecompanyId').value;
+            if (!freecompanyId) {
+                alert('請輸入自由部隊 ID');
+                return;
+            }
+            makeRequest(`/freecompany/${freecompanyId}/members`, 'freecompany-result');
+        }
+
+        function testFreeCompanyMembersWithPage() {
+            const freecompanyId = document.getElementById('fcMembersId').value;
+            const page = document.getElementById('fcMembersPage').value;
+            if (!freecompanyId) {
+                alert('請輸入自由部隊 ID');
+                return;
+            }
+            makeRequest(`/freecompany/${freecompanyId}/members?page=${page}`, 'fc-members-result');
+        }
+
+        // 收藏品相關測試
+        function testMinions() {
+            const characterId = document.getElementById('collectionCharacterId').value;
+            if (!characterId) {
+                alert('請輸入角色 ID');
+                return;
+            }
+            makeRequest(`/character/${characterId}/minions`, 'collection-result');
+        }
+
+        function testMounts() {
+            const characterId = document.getElementById('collectionCharacterId').value;
+            if (!characterId) {
+                alert('請輸入角色 ID');
+                return;
+            }
+            makeRequest(`/character/${characterId}/mounts`, 'collection-result');
+        }
+
+        // 快速測試
+        function quickTest(type, id) {
+            switch(type) {
+                case 'character':
+                    document.getElementById('characterId').value = id;
+                    testCharacter();
+                    break;
+                case 'freecompany':
+                    document.getElementById('freecompanyId').value = id;
+                    testFreeCompany();
+                    break;
+                case 'minions':
+                    document.getElementById('collectionCharacterId').value = id;
+                    testMinions();
+                    break;
+                case 'mounts':
+                    document.getElementById('collectionCharacterId').value = id;
+                    testMounts();
+                    break;
+            }
+        }
+
+        // 頁面載入完成後，聚焦第一個輸入框
+        window.onload = function() {
+            document.getElementById('characterId').focus();
+        };
+    </script>
+</body>
+</html>

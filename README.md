@@ -1,14 +1,21 @@
 # Nodestone Worker
 
-Cloudflare Workers 版本的 Nodestone - FFXIV Lodestone 解析服務。
+Cloudflare Workers 版本的 Nodestone - FFXIV Lodestone 解析服務。提供完整的角色、自由部隊、成就、寵物、坐騎等遊戲資料查詢 API。
 
 ## 功能特點
 
-- 使用 Cloudflare Workers 部署，全球低延遲
-- 整合 KV 儲存進行快取，減少對 Lodestone 的請求
-- 快取時間可設定（預設 24 小時）
-- 自動處理快取過期和更新
-- 支援角色基本資料和職業等級查詢
+- 🚀 使用 Cloudflare Workers 部署，全球低延遲
+- 💾 整合 KV 儲存進行智慧快取，減少對 Lodestone 的請求
+- ⏱️ 分層快取策略（基本資料 24 小時，成就/收藏品 48 小時）
+- 🔄 自動處理快取過期和更新
+- 📄 支援分頁查詢（成就、部隊成員）
+- 🎮 完整資料支援：
+  - 角色基本資料（含 FreeCompany、PvPTeam 資訊）
+  - 職業等級（戰鬥、製作、採集、特殊內容）
+  - 成就系統（含總數、點數、分頁）
+  - 自由部隊（基本資料、房產、聲望、重點活動）
+  - 部隊成員列表
+  - 寵物/坐騎收集
 
 ## 部署步驟
 
@@ -410,7 +417,7 @@ curl https://your-worker.workers.dev/character/123456/mounts
 ## 回應標頭
 
 - `X-Cache-Status`: `HIT` (快取命中) 或 `MISS` (快取未命中)
-- `Access-Control-Allow-Origin`: 僅允許來自 ff14.tw 的請求
+- `Access-Control-Allow-Origin`: 允許來自 ff14.tw 網域及本地開發環境
 
 ## 環境變數
 
@@ -426,12 +433,61 @@ yarn dev
 
 這會啟動本地開發伺服器，可在 `http://localhost:8787` 測試。
 
+## 測試
+
+專案包含完整的測試頁面 `test.html`，可測試所有 API 端點：
+
+```bash
+npm run dev
+open test.html
+```
+
+測試頁面功能：
+- 分頁式介面（角色、自由部隊、收藏品）
+- 快速測試按鈕
+- 結果複製功能
+- 快取狀態顯示
+
 ## 限制
 
-- HTML 解析使用簡化版本，部分複雜欄位可能無法正確解析
-- 僅支援北美資料中心的角色查詢
-- CORS 限制：只允許來自 `https://ff14.tw` 和 `https://www.ff14.tw` 的請求
+- 僅支援北美（NA）資料中心的查詢
+- CORS 限制：只允許來自 ff14.tw 網域的請求（本地開發環境例外）
+- 部分功能尚未實作（搜尋、CWLS、Linkshell、PvP小隊）
+
+## 專案架構
+
+```
+├── src/
+│   ├── index.ts              # 主程式進入點，路由處理
+│   ├── parsers/              # HTML 解析器
+│   │   ├── character-parser.ts     # 角色資料解析
+│   │   ├── classjob-parser.ts      # 職業等級解析
+│   │   ├── achievements-parser.ts   # 成就資料解析
+│   │   ├── freecompany-parser.ts    # 自由部隊解析
+│   │   ├── freecompany-members-parser.ts # 部隊成員解析
+│   │   ├── minion-parser.ts        # 寵物收集解析
+│   │   └── mount-parser.ts          # 坐騎收集解析
+│   └── lib/
+│       └── lodestone-css-selectors/ # CSS 選擇器定義
+├── wrangler.toml             # Cloudflare Workers 設定
+├── test.html                 # API 測試頁面
+└── FEATURE_COMPARISON.md     # 功能對比文件
+```
+
+## 未來規劃
+
+- [ ] 角色搜尋功能
+- [ ] 自由部隊搜尋功能
+- [ ] 跨界聯絡貝（CWLS）支援
+- [ ] 聯絡貝（Linkshell）支援
+- [ ] PvP 小隊詳細資訊
+- [ ] 角色屬性數值
+- [ ] 角色裝備資訊
 
 ## CSS Selectors 來源
 
 本專案使用的 CSS selectors 來自：https://github.com/xivapi/lodestone-css-selectors
+
+## 授權
+
+MIT License
