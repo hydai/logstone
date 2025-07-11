@@ -1,14 +1,14 @@
 {
     "MINIONS": {
         "ROOT": {
-            "selector": ".minion__list__item",
+            "selector": ".minion__list_icon",
             "multiple": true
         },
-        "NAME": {
-            "selector": ".minion__name"
+        "TOOLTIP": {
+            "attribute": "data-tooltip_href"
         },
         "ICON": {
-            "selector": ".minion__list__icon__image",
+            "selector": "img.character__item_icon__img",
             "attribute": "src"
         }
     },

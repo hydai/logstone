@@ -51,11 +51,14 @@ export class MinionParser {
   private parseMinionEntry(element: Element): MinionData | null {
     const minion: any = {};
 
-    // 解析名稱
-    if (minionSelectors.MINIONS.NAME) {
-      const nameElement = this.querySelector(element, minionSelectors.MINIONS.NAME.selector);
-      if (nameElement) {
-        minion.Name = this.getTextContent(nameElement);
+    // 解析 tooltip URL 來獲取名稱
+    if (minionSelectors.MINIONS.TOOLTIP) {
+      // 直接從 element 本身獲取 attribute
+      const tooltipUrl = this.getAttribute(element, minionSelectors.MINIONS.TOOLTIP.attribute || 'data-tooltip_href') || '';
+      if (tooltipUrl) {
+        // 從 URL 中提取最後一部分作為 ID
+        const parts = tooltipUrl.split('/');
+        minion.Name = `Minion-${parts[parts.length - 1]}`;
       }
     }
 

@@ -170,8 +170,10 @@ function parseCharacterHTML(html: string, characterId: string): any {
 
 // 檢查請求是否來自允許的來源
 function isRequestAllowed(request: Request): boolean {
+  const url = new URL(request.url);
   const origin = request.headers.get('Origin');
   const referer = request.headers.get('Referer');
+  
   
   // 允許的來源域名
   const allowedDomains = ['ff14.tw'];
@@ -179,6 +181,8 @@ function isRequestAllowed(request: Request): boolean {
   // 檢查 Origin header
   if (origin) {
     const originUrl = new URL(origin);
+    
+    
     return allowedDomains.some(domain => 
       originUrl.hostname === domain || originUrl.hostname.endsWith(`.${domain}`)
     );
@@ -188,6 +192,8 @@ function isRequestAllowed(request: Request): boolean {
   if (referer) {
     try {
       const refererUrl = new URL(referer);
+      
+      
       return allowedDomains.some(domain => 
         refererUrl.hostname === domain || refererUrl.hostname.endsWith(`.${domain}`)
       );
@@ -204,13 +210,16 @@ function isRequestAllowed(request: Request): boolean {
 function getAllowedOrigin(request: Request): string | null {
   const origin = request.headers.get('Origin');
   
+  if (!origin) return null;
+  
   // 允許的來源域名
   const allowedOrigins = [
     'https://ff14.tw',
     'https://www.ff14.tw',
   ];
   
-  if (origin && allowedOrigins.includes(origin)) {
+  
+  if (allowedOrigins.includes(origin)) {
     return origin;
   }
   
