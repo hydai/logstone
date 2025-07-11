@@ -367,8 +367,8 @@ curl https://your-worker.workers.dev/character/123456/minions
   "CharacterID": 123456,
   "Minions": [
     {
-      "Name": "Goobbue Sproutling",
-      "Icon": "https://img.finalfantasyxiv.com/lds/pc/global/images/itemicon/minion.png"
+      "Name": "Minion-07bdde521e18e58ce3629e0266ad946df929a7e6",
+      "Icon": "https://lds-img.finalfantasyxiv.com/itemicon/6c/6c0932ba8e21c47200b7d65d3c88714fe33ed8d2.png"
     }
   ],
   "Total": 425
@@ -378,7 +378,7 @@ curl https://your-worker.workers.dev/character/123456/minions
 #### 寵物資料欄位說明
 
 - `Minions`: 寵物列表陣列
-  - `Name`: 寵物名稱
+  - `Name`: 寵物識別碼（從 tooltip URL 提取）
   - `Icon`: 寵物圖標 URL
 - `Total`: 擁有的寵物總數
 
@@ -399,8 +399,8 @@ curl https://your-worker.workers.dev/character/123456/mounts
   "CharacterID": 123456,
   "Mounts": [
     {
-      "Name": "Company Chocobo",
-      "Icon": "https://img.finalfantasyxiv.com/lds/pc/global/images/itemicon/mount.png"
+      "Name": "Mount-9045c5c5d5d181ee495f0e76af07d6d93c9f0f13",
+      "Icon": "https://lds-img.finalfantasyxiv.com/itemicon/e6/e6cd1b44f2e625546c0a4c4ee9dff3de07b02082.png"
     }
   ],
   "Total": 218
@@ -410,14 +410,14 @@ curl https://your-worker.workers.dev/character/123456/mounts
 #### 坐騎資料欄位說明
 
 - `Mounts`: 坐騎列表陣列
-  - `Name`: 坐騎名稱
+  - `Name`: 坐騎識別碼（從 tooltip URL 提取）
   - `Icon`: 坐騎圖標 URL
 - `Total`: 擁有的坐騎總數
 
 ## 回應標頭
 
 - `X-Cache-Status`: `HIT` (快取命中) 或 `MISS` (快取未命中)
-- `Access-Control-Allow-Origin`: 允許來自 ff14.tw 網域及本地開發環境
+- `Access-Control-Allow-Origin`: 允許來自 ff14.tw 網域
 
 ## 環境變數
 
@@ -451,8 +451,9 @@ open test.html
 ## 限制
 
 - 僅支援北美（NA）資料中心的查詢
-- CORS 限制：只允許來自 ff14.tw 網域的請求（本地開發環境例外）
+- CORS 限制：只允許來自 ff14.tw 網域的請求
 - 部分功能尚未實作（搜尋、CWLS、Linkshell、PvP小隊）
+- 坐騎/寵物名稱目前顯示為識別碼（從 tooltip URL 提取）
 
 ## 專案架構
 

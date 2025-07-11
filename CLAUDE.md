@@ -67,9 +67,14 @@ npx tsc --noEmit
   - Error handling for missing elements
 
 - **CORS Handling**: 
-  - Production: Restricted to ff14.tw domains
-  - Development: Allows localhost access
+  - Production: Restricted to ff14.tw domains only
   - Proper preflight request handling
+  - No localhost exceptions in production
+
+- **Mount/Minion Parsing**:
+  - Names are extracted from tooltip URLs as identifiers
+  - Format: `Mount-{hash}` or `Minion-{hash}`
+  - Icons are properly extracted from img elements
 
 ## Testing
 
