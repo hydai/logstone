@@ -35,8 +35,9 @@ npx tsc --noEmit
 1. **Entry Point** (`src/index.ts`): Handles HTTP routing, CORS, and KV caching
    - Character routes: `/character/{id}`, `/character/{id}/classjob`, `/character/{id}/achievements`, `/character/{id}/minions`, `/character/{id}/mounts`
    - Free Company routes: `/freecompany/{id}`, `/freecompany/{id}/members`
+   - Data center support: All endpoints accept `?dc={na|jp}` parameter (defaults to `na`)
    - Cache TTL: 24 hours for basic data, 48 hours for achievements/collections
-   - CORS: Supports ff14.tw domains and localhost for development
+   - CORS: Supports ff14.tw domains only
 
 2. **Parsers** (`src/parsers/`): Specialized HTML parsers using htmlparser2
    - `character-parser.ts`: Character profile data (enhanced with FC/PvP info)
@@ -58,6 +59,7 @@ npx tsc --noEmit
   - Uses Cloudflare KV namespace "LOGSTONE"
   - Basic data: 24-hour cache
   - Collections/achievements: 48-hour cache
+  - Cache keys include data center prefix (e.g., `character:jp:123456`)
   - Cache status exposed via `X-Cache-Status` header
 
 - **Parser Pattern**: All parsers follow consistent structure:
@@ -126,6 +128,6 @@ The `wrangler.toml` file contains:
 ## Constraints
 
 - **CSS Selectors**: Cannot modify files in `lodestone-css-selectors/`
-- **Region**: Only supports NA (North America) data centers
+- **Region**: Supports NA (North America) and JP (Japan) data centers
 - **Read-only**: No write operations to Lodestone
 - **CORS**: Must maintain security restrictions

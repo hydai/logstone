@@ -41,17 +41,23 @@ yarn deploy
 
 ## 使用方式
 
-部署後，可以透過以下 API 查詢資料：
+部署後，可以透過以下 API 查詢資料。所有 API 端點都支援 `dc` 參數指定資料中心：
+- `na` (預設): 北美資料中心
+- `jp`: 日本資料中心
 
 ### 1. 角色基本資料
 
 ```
-GET https://your-worker.workers.dev/character/{characterId}
+GET https://your-worker.workers.dev/character/{characterId}?dc={dataCenter}
 ```
 
 範例：
 ```bash
+# 北美資料中心 (預設)
 curl https://your-worker.workers.dev/character/123456
+
+# 日本資料中心
+curl https://your-worker.workers.dev/character/123456?dc=jp
 ```
 
 回應格式：
@@ -78,12 +84,16 @@ curl https://your-worker.workers.dev/character/123456
 ### 2. 職業等級資料
 
 ```
-GET https://your-worker.workers.dev/character/{characterId}/classjob
+GET https://your-worker.workers.dev/character/{characterId}/classjob?dc={dataCenter}
 ```
 
 範例：
 ```bash
+# 北美資料中心 (預設)
 curl https://your-worker.workers.dev/character/123456/classjob
+
+# 日本資料中心
+curl https://your-worker.workers.dev/character/123456/classjob?dc=jp
 ```
 
 回應格式：
@@ -200,12 +210,16 @@ curl https://your-worker.workers.dev/character/123456/classjob
 ### 3. 成就資料
 
 ```
-GET https://your-worker.workers.dev/character/{characterId}/achievements?page={page}
+GET https://your-worker.workers.dev/character/{characterId}/achievements?page={page}&dc={dataCenter}
 ```
 
 範例：
 ```bash
+# 北美資料中心 (預設)
 curl https://your-worker.workers.dev/character/123456/achievements?page=1
+
+# 日本資料中心
+curl https://your-worker.workers.dev/character/123456/achievements?page=1&dc=jp
 ```
 
 回應格式：
@@ -247,12 +261,16 @@ curl https://your-worker.workers.dev/character/123456/achievements?page=1
 ### 4. 自由部隊資料
 
 ```
-GET https://your-worker.workers.dev/freecompany/{freecompanyId}
+GET https://your-worker.workers.dev/freecompany/{freecompanyId}?dc={dataCenter}
 ```
 
 範例：
 ```bash
+# 北美資料中心 (預設)
 curl https://your-worker.workers.dev/freecompany/123456789
+
+# 日本資料中心
+curl https://your-worker.workers.dev/freecompany/123456789?dc=jp
 ```
 
 回應格式：
@@ -314,12 +332,16 @@ curl https://your-worker.workers.dev/freecompany/123456789
 ### 5. 自由部隊成員列表
 
 ```
-GET https://your-worker.workers.dev/freecompany/{freecompanyId}/members?page={page}
+GET https://your-worker.workers.dev/freecompany/{freecompanyId}/members?page={page}&dc={dataCenter}
 ```
 
 範例：
 ```bash
+# 北美資料中心 (預設)
 curl https://your-worker.workers.dev/freecompany/123456789/members?page=1
+
+# 日本資料中心
+curl https://your-worker.workers.dev/freecompany/123456789/members?page=1&dc=jp
 ```
 
 回應格式：
@@ -353,12 +375,16 @@ curl https://your-worker.workers.dev/freecompany/123456789/members?page=1
 ### 6. 寵物收集
 
 ```
-GET https://your-worker.workers.dev/character/{characterId}/minions
+GET https://your-worker.workers.dev/character/{characterId}/minions?dc={dataCenter}
 ```
 
 範例：
 ```bash
+# 北美資料中心 (預設)
 curl https://your-worker.workers.dev/character/123456/minions
+
+# 日本資料中心
+curl https://your-worker.workers.dev/character/123456/minions?dc=jp
 ```
 
 回應格式：
@@ -385,12 +411,16 @@ curl https://your-worker.workers.dev/character/123456/minions
 ### 7. 坐騎收集
 
 ```
-GET https://your-worker.workers.dev/character/{characterId}/mounts
+GET https://your-worker.workers.dev/character/{characterId}/mounts?dc={dataCenter}
 ```
 
 範例：
 ```bash
+# 北美資料中心 (預設)
 curl https://your-worker.workers.dev/character/123456/mounts
+
+# 日本資料中心
+curl https://your-worker.workers.dev/character/123456/mounts?dc=jp
 ```
 
 回應格式：
@@ -450,7 +480,7 @@ open test.html
 
 ## 限制
 
-- 僅支援北美（NA）資料中心的查詢
+- 支援北美（NA）和日本（JP）資料中心的查詢
 - CORS 限制：只允許來自 ff14.tw 網域的請求
 - 部分功能尚未實作（搜尋、CWLS、Linkshell、PvP小隊）
 - 坐騎/寵物名稱目前顯示為識別碼（從 tooltip URL 提取）

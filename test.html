@@ -17,6 +17,25 @@
             text-align: center;
             margin-bottom: 30px;
         }
+        .dc-selector {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .dc-selector label {
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        .dc-selector select {
+            padding: 8px 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
         .section {
             background: white;
             padding: 20px;
@@ -169,6 +188,14 @@
 <body>
     <h1>Lodestone Worker API 測試頁面</h1>
     
+    <div class="dc-selector">
+        <label for="datacenter">資料中心：</label>
+        <select id="datacenter" onchange="onDataCenterChange()">
+            <option value="na" selected>北美 (NA)</option>
+            <option value="jp">日本 (JP)</option>
+        </select>
+    </div>
+    
     <div class="tabs">
         <button class="tab active" onclick="switchTab('character')">角色資料</button>
         <button class="tab" onclick="switchTab('freecompany')">自由部隊</button>
@@ -265,6 +292,17 @@
     <script>
         const API_BASE = 'http://localhost:8787';
 
+        function getSelectedDataCenter() {
+            return document.getElementById('datacenter').value;
+        }
+
+        function onDataCenterChange() {
+            // 清空所有結果區域
+            document.querySelectorAll('.result').forEach(result => {
+                result.style.display = 'none';
+            });
+        }
+
         function switchTab(tabName) {
             // 隱藏所有標籤內容
             document.querySelectorAll('.tab-content').forEach(content => {
@@ -289,8 +327,13 @@
             resultElement.className = 'result loading';
             resultElement.innerHTML = '<pre>載入中...</pre>';
 
+            // 加入資料中心參數
+            const dc = getSelectedDataCenter();
+            const separator = endpoint.includes('?') ? '&' : '?';
+            const finalEndpoint = `${endpoint}${separator}dc=${dc}`;
+
             try {
-                const response = await fetch(`${API_BASE}${endpoint}`);
+                const response = await fetch(`${API_BASE}${finalEndpoint}`);
                 const data = await response.json();
                 
                 // 取得快取狀態
@@ -307,7 +350,7 @@
                         <button class="copy-button" onclick="copyToClipboard('${resultId}', this)">複製</button>
                         <div>
                             <strong>成功</strong>${cacheStatusHtml}
-                            <br><small>端點: ${endpoint}</small>
+                            <br><small>端點: ${finalEndpoint}</small>
                         </div>
                         <pre id="${resultId}">${jsonString}</pre>
                     `;
@@ -317,7 +360,7 @@
                         <button class="copy-button" onclick="copyToClipboard('${resultId}', this)">複製</button>
                         <div>
                             <strong>錯誤 ${response.status}</strong>
-                            <br><small>端點: ${endpoint}</small>
+                            <br><small>端點: ${finalEndpoint}</small>
                         </div>
                         <pre id="${resultId}">${jsonString}</pre>
                     `;

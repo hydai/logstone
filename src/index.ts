@@ -60,7 +60,20 @@ export default {
 };
 
 async function handleCharacterRequest(characterId: string, request: Request, env: Env): Promise<Response> {
-  const cacheKey = `character:${characterId}`;
+  const url = new URL(request.url);
+  const dc = url.searchParams.get('dc') || 'na';
+  
+  // 驗證資料中心參數
+  if (!['na', 'jp'].includes(dc)) {
+    return createResponse(
+      JSON.stringify({ error: 'Invalid data center. Supported values: na, jp' }), 
+      request, 
+      null, 
+      400
+    );
+  }
+  
+  const cacheKey = `character:${dc}:${characterId}`;
 
   try {
     // 嘗試從 KV 快取取得資料
@@ -77,7 +90,7 @@ async function handleCharacterRequest(characterId: string, request: Request, env
     }
 
     // 快取未命中或已過期，從 Lodestone 取得資料
-    const characterData = await fetchCharacterData(characterId);
+    const characterData = await fetchCharacterData(characterId, dc);
 
     // 儲存到 KV 快取
     const cacheEntry: CacheEntry = {
@@ -100,7 +113,20 @@ async function handleCharacterRequest(characterId: string, request: Request, env
 }
 
 async function handleClassJobRequest(characterId: string, request: Request, env: Env): Promise<Response> {
-  const cacheKey = `classjob:${characterId}`;
+  const url = new URL(request.url);
+  const dc = url.searchParams.get('dc') || 'na';
+  
+  // 驗證資料中心參數
+  if (!['na', 'jp'].includes(dc)) {
+    return createResponse(
+      JSON.stringify({ error: 'Invalid data center. Supported values: na, jp' }), 
+      request, 
+      null, 
+      400
+    );
+  }
+  
+  const cacheKey = `classjob:${dc}:${characterId}`;
 
   try {
     // 嘗試從 KV 快取取得資料
@@ -139,8 +165,8 @@ async function handleClassJobRequest(characterId: string, request: Request, env:
   }
 }
 
-async function fetchCharacterData(characterId: string): Promise<any> {
-  const url = `https://na.finalfantasyxiv.com/lodestone/character/${characterId}`;
+async function fetchCharacterData(characterId: string, dc: string = 'na'): Promise<any> {
+  const url = `https://${dc}.finalfantasyxiv.com/lodestone/character/${characterId}`;
   
   const response = await fetch(url);
   if (!response.ok) {
@@ -268,8 +294,8 @@ function createResponse(
   return new Response(body, { status, headers });
 }
 
-async function fetchClassJobData(characterId: string): Promise<any> {
-  const url = `https://na.finalfantasyxiv.com/lodestone/character/${characterId}/class_job`;
+async function fetchClassJobData(characterId: string, dc: string = 'na'): Promise<any> {
+  const url = `https://${dc}.finalfantasyxiv.com/lodestone/character/${characterId}/class_job`;
   
   const response = await fetch(url);
   if (!response.ok) {
@@ -294,7 +320,19 @@ async function fetchClassJobData(characterId: string): Promise<any> {
 async function handleAchievementsRequest(characterId: string, request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const page = parseInt(url.searchParams.get('page') || '1');
-  const cacheKey = `achievements:${characterId}:page${page}`;
+  const dc = url.searchParams.get('dc') || 'na';
+  
+  // 驗證資料中心參數
+  if (!['na', 'jp'].includes(dc)) {
+    return createResponse(
+      JSON.stringify({ error: 'Invalid data center. Supported values: na, jp' }), 
+      request, 
+      null, 
+      400
+    );
+  }
+  
+  const cacheKey = `achievements:${dc}:${characterId}:page${page}`;
 
   try {
     // 嘗試從 KV 快取取得資料
@@ -333,8 +371,8 @@ async function handleAchievementsRequest(characterId: string, request: Request, 
   }
 }
 
-async function fetchAchievementsData(characterId: string, page: number = 1): Promise<any> {
-  const url = `https://na.finalfantasyxiv.com/lodestone/character/${characterId}/achievement?page=${page}`;
+async function fetchAchievementsData(characterId: string, page: number = 1, dc: string = 'na'): Promise<any> {
+  const url = `https://${dc}.finalfantasyxiv.com/lodestone/character/${characterId}/achievement?page=${page}`;
   
   const response = await fetch(url);
   if (!response.ok) {
@@ -357,7 +395,20 @@ async function fetchAchievementsData(characterId: string, page: number = 1): Pro
 }
 
 async function handleFreeCompanyRequest(freecompanyId: string, request: Request, env: Env): Promise<Response> {
-  const cacheKey = `freecompany:${freecompanyId}`;
+  const url = new URL(request.url);
+  const dc = url.searchParams.get('dc') || 'na';
+  
+  // 驗證資料中心參數
+  if (!['na', 'jp'].includes(dc)) {
+    return createResponse(
+      JSON.stringify({ error: 'Invalid data center. Supported values: na, jp' }), 
+      request, 
+      null, 
+      400
+    );
+  }
+  
+  const cacheKey = `freecompany:${dc}:${freecompanyId}`;
 
   try {
     // 嘗試從 KV 快取取得資料
@@ -374,7 +425,7 @@ async function handleFreeCompanyRequest(freecompanyId: string, request: Request,
     }
 
     // 快取未命中或已過期，從 Lodestone 取得資料
-    const freecompanyData = await fetchFreeCompanyData(freecompanyId);
+    const freecompanyData = await fetchFreeCompanyData(freecompanyId, dc);
 
     // 儲存到 KV 快取
     const cacheEntry: CacheEntry = {
@@ -396,8 +447,8 @@ async function handleFreeCompanyRequest(freecompanyId: string, request: Request,
   }
 }
 
-async function fetchFreeCompanyData(freecompanyId: string): Promise<any> {
-  const url = `https://na.finalfantasyxiv.com/lodestone/freecompany/${freecompanyId}`;
+async function fetchFreeCompanyData(freecompanyId: string, dc: string = 'na'): Promise<any> {
+  const url = `https://${dc}.finalfantasyxiv.com/lodestone/freecompany/${freecompanyId}`;
   
   const response = await fetch(url);
   if (!response.ok) {
@@ -421,7 +472,19 @@ async function fetchFreeCompanyData(freecompanyId: string): Promise<any> {
 async function handleFreeCompanyMembersRequest(freecompanyId: string, request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const page = parseInt(url.searchParams.get('page') || '1');
-  const cacheKey = `freecompany:${freecompanyId}:members:page${page}`;
+  const dc = url.searchParams.get('dc') || 'na';
+  
+  // 驗證資料中心參數
+  if (!['na', 'jp'].includes(dc)) {
+    return createResponse(
+      JSON.stringify({ error: 'Invalid data center. Supported values: na, jp' }), 
+      request, 
+      null, 
+      400
+    );
+  }
+  
+  const cacheKey = `freecompany:${dc}:${freecompanyId}:members:page${page}`;
 
   try {
     // 嘗試從 KV 快取取得資料
@@ -438,7 +501,7 @@ async function handleFreeCompanyMembersRequest(freecompanyId: string, request: R
     }
 
     // 快取未命中或已過期，從 Lodestone 取得資料
-    const membersData = await fetchFreeCompanyMembersData(freecompanyId, page);
+    const membersData = await fetchFreeCompanyMembersData(freecompanyId, page, dc);
 
     // 儲存到 KV 快取
     const cacheEntry: CacheEntry = {
@@ -460,8 +523,8 @@ async function handleFreeCompanyMembersRequest(freecompanyId: string, request: R
   }
 }
 
-async function fetchFreeCompanyMembersData(freecompanyId: string, page: number = 1): Promise<any> {
-  const url = `https://na.finalfantasyxiv.com/lodestone/freecompany/${freecompanyId}/member?page=${page}`;
+async function fetchFreeCompanyMembersData(freecompanyId: string, page: number = 1, dc: string = 'na'): Promise<any> {
+  const url = `https://${dc}.finalfantasyxiv.com/lodestone/freecompany/${freecompanyId}/member?page=${page}`;
   
   const response = await fetch(url);
   if (!response.ok) {
@@ -484,7 +547,20 @@ async function fetchFreeCompanyMembersData(freecompanyId: string, page: number =
 }
 
 async function handleMinionsRequest(characterId: string, request: Request, env: Env): Promise<Response> {
-  const cacheKey = `minions:${characterId}`;
+  const url = new URL(request.url);
+  const dc = url.searchParams.get('dc') || 'na';
+  
+  // 驗證資料中心參數
+  if (!['na', 'jp'].includes(dc)) {
+    return createResponse(
+      JSON.stringify({ error: 'Invalid data center. Supported values: na, jp' }), 
+      request, 
+      null, 
+      400
+    );
+  }
+  
+  const cacheKey = `minions:${dc}:${characterId}`;
 
   try {
     // 嘗試從 KV 快取取得資料
@@ -501,7 +577,7 @@ async function handleMinionsRequest(characterId: string, request: Request, env: 
     }
 
     // 快取未命中或已過期，從 Lodestone 取得資料
-    const minionsData = await fetchMinionsData(characterId);
+    const minionsData = await fetchMinionsData(characterId, dc);
 
     // 儲存到 KV 快取
     const cacheEntry: CacheEntry = {
@@ -523,8 +599,8 @@ async function handleMinionsRequest(characterId: string, request: Request, env: 
   }
 }
 
-async function fetchMinionsData(characterId: string): Promise<any> {
-  const url = `https://na.finalfantasyxiv.com/lodestone/character/${characterId}/minion`;
+async function fetchMinionsData(characterId: string, dc: string = 'na'): Promise<any> {
+  const url = `https://${dc}.finalfantasyxiv.com/lodestone/character/${characterId}/minion`;
   
   const response = await fetch(url);
   if (!response.ok) {
@@ -547,7 +623,20 @@ async function fetchMinionsData(characterId: string): Promise<any> {
 }
 
 async function handleMountsRequest(characterId: string, request: Request, env: Env): Promise<Response> {
-  const cacheKey = `mounts:${characterId}`;
+  const url = new URL(request.url);
+  const dc = url.searchParams.get('dc') || 'na';
+  
+  // 驗證資料中心參數
+  if (!['na', 'jp'].includes(dc)) {
+    return createResponse(
+      JSON.stringify({ error: 'Invalid data center. Supported values: na, jp' }), 
+      request, 
+      null, 
+      400
+    );
+  }
+  
+  const cacheKey = `mounts:${dc}:${characterId}`;
 
   try {
     // 嘗試從 KV 快取取得資料
@@ -564,7 +653,7 @@ async function handleMountsRequest(characterId: string, request: Request, env: E
     }
 
     // 快取未命中或已過期，從 Lodestone 取得資料
-    const mountsData = await fetchMountsData(characterId);
+    const mountsData = await fetchMountsData(characterId, dc);
 
     // 儲存到 KV 快取
     const cacheEntry: CacheEntry = {
@@ -586,8 +675,8 @@ async function handleMountsRequest(characterId: string, request: Request, env: E
   }
 }
 
-async function fetchMountsData(characterId: string): Promise<any> {
-  const url = `https://na.finalfantasyxiv.com/lodestone/character/${characterId}/mount`;
+async function fetchMountsData(characterId: string, dc: string = 'na'): Promise<any> {
+  const url = `https://${dc}.finalfantasyxiv.com/lodestone/character/${characterId}/mount`;
   
   const response = await fetch(url);
   if (!response.ok) {
