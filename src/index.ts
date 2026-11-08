@@ -19,17 +19,17 @@ interface CacheEntry {
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
-    
+
     // 檢查請求來源是否被允許
     if (!isRequestAllowed(request)) {
       return new Response('Forbidden', { status: 403 });
     }
-    
+
     // 處理 CORS preflight 請求
     if (request.method === 'OPTIONS') {
       return handleCORS(request);
     }
-    
+
     // 處理不同的路徑
     const characterMatch = url.pathname.match(/^\/character\/(\d+)$/);
     const classJobMatch = url.pathname.match(/^\/character\/(\d+)\/classjob$/);
@@ -38,7 +38,7 @@ export default {
     const freecompanyMembersMatch = url.pathname.match(/^\/freecompany\/(\d+)\/members$/);
     const minionsMatch = url.pathname.match(/^\/character\/(\d+)\/minions$/);
     const mountsMatch = url.pathname.match(/^\/character\/(\d+)\/mounts$/);
-    
+
     if (characterMatch) {
       return handleCharacterRequest(characterMatch[1], request, env);
     } else if (classJobMatch) {
@@ -62,17 +62,17 @@ export default {
 async function handleCharacterRequest(characterId: string, request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const dc = url.searchParams.get('dc') || 'na';
-  
+
   // 驗證資料中心參數
   if (!['na', 'jp'].includes(dc)) {
     return createResponse(
-      JSON.stringify({ error: 'Invalid data center. Supported values: na, jp' }), 
-      request, 
-      null, 
+      JSON.stringify({ error: 'Invalid data center. Supported values: na, jp' }),
+      request,
+      null,
       400
     );
   }
-  
+
   const cacheKey = `character:${dc}:${characterId}`;
 
   try {
@@ -104,9 +104,9 @@ async function handleCharacterRequest(characterId: string, request: Request, env
   } catch (error) {
     console.error('Error:', error);
     return createResponse(
-      JSON.stringify({ error: 'Internal Server Error' }), 
-      request, 
-      null, 
+      JSON.stringify({ error: 'Internal Server Error' }),
+      request,
+      null,
       500
     );
   }
@@ -115,17 +115,17 @@ async function handleCharacterRequest(characterId: string, request: Request, env
 async function handleClassJobRequest(characterId: string, request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const dc = url.searchParams.get('dc') || 'na';
-  
+
   // 驗證資料中心參數
   if (!['na', 'jp'].includes(dc)) {
     return createResponse(
-      JSON.stringify({ error: 'Invalid data center. Supported values: na, jp' }), 
-      request, 
-      null, 
+      JSON.stringify({ error: 'Invalid data center. Supported values: na, jp' }),
+      request,
+      null,
       400
     );
   }
-  
+
   const cacheKey = `classjob:${dc}:${characterId}`;
 
   try {
@@ -157,9 +157,9 @@ async function handleClassJobRequest(characterId: string, request: Request, env:
   } catch (error) {
     console.error('Error:', error);
     return createResponse(
-      JSON.stringify({ error: 'Internal Server Error' }), 
-      request, 
-      null, 
+      JSON.stringify({ error: 'Internal Server Error' }),
+      request,
+      null,
       500
     );
   }
@@ -167,7 +167,7 @@ async function handleClassJobRequest(characterId: string, request: Request, env:
 
 async function fetchCharacterData(characterId: string, dc: string = 'na'): Promise<any> {
   const url = `https://${dc}.finalfantasyxiv.com/lodestone/character/${characterId}`;
-  
+
   const response = await fetch(url);
   if (!response.ok) {
     if (response.status === 404) {
@@ -177,10 +177,10 @@ async function fetchCharacterData(characterId: string, dc: string = 'na'): Promi
   }
 
   const html = await response.text();
-  
+
   // 解析 HTML 並提取角色資料
   const characterData = parseCharacterHTML(html, characterId);
-  
+
   return {
     Character: {
       ID: parseInt(characterId),
@@ -199,35 +199,35 @@ function isRequestAllowed(request: Request): boolean {
   const url = new URL(request.url);
   const origin = request.headers.get('Origin');
   const referer = request.headers.get('Referer');
-  
-  
+
+
   // 允許的來源域名
   const allowedDomains = ['ff14.tw'];
-  
+
   // 檢查 Origin header
   if (origin) {
     const originUrl = new URL(origin);
-    
-    
-    return allowedDomains.some(domain => 
+
+
+    return allowedDomains.some(domain =>
       originUrl.hostname === domain || originUrl.hostname.endsWith(`.${domain}`)
     );
   }
-  
+
   // 檢查 Referer header
   if (referer) {
     try {
       const refererUrl = new URL(referer);
-      
-      
-      return allowedDomains.some(domain => 
+
+
+      return allowedDomains.some(domain =>
         refererUrl.hostname === domain || refererUrl.hostname.endsWith(`.${domain}`)
       );
     } catch {
       return false;
     }
   }
-  
+
   // 如果沒有 Origin 或 Referer，拒絕請求
   return false;
 }
@@ -235,30 +235,30 @@ function isRequestAllowed(request: Request): boolean {
 // CORS 處理函數
 function getAllowedOrigin(request: Request): string | null {
   const origin = request.headers.get('Origin');
-  
+
   if (!origin) return null;
-  
+
   // 允許的來源域名
   const allowedOrigins = [
     'https://ff14.tw',
     'https://www.ff14.tw',
   ];
-  
-  
+
+
   if (allowedOrigins.includes(origin)) {
     return origin;
   }
-  
+
   return null;
 }
 
 function handleCORS(request: Request): Response {
   const allowedOrigin = getAllowedOrigin(request);
-  
+
   if (!allowedOrigin) {
     return new Response('Forbidden', { status: 403 });
   }
-  
+
   return new Response(null, {
     status: 204,
     headers: {
@@ -271,32 +271,32 @@ function handleCORS(request: Request): Response {
 }
 
 function createResponse(
-  body: string, 
-  request: Request, 
+  body: string,
+  request: Request,
   cacheStatus: string | null = null,
   status: number = 200
 ): Response {
   const allowedOrigin = getAllowedOrigin(request);
-  
+
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
   };
-  
+
   if (allowedOrigin) {
     headers['Access-Control-Allow-Origin'] = allowedOrigin;
     headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS';
   }
-  
+
   if (cacheStatus) {
     headers['X-Cache-Status'] = cacheStatus;
   }
-  
+
   return new Response(body, { status, headers });
 }
 
 async function fetchClassJobData(characterId: string, dc: string = 'na'): Promise<any> {
   const url = `https://${dc}.finalfantasyxiv.com/lodestone/character/${characterId}/class_job`;
-  
+
   const response = await fetch(url);
   if (!response.ok) {
     if (response.status === 404) {
@@ -306,11 +306,11 @@ async function fetchClassJobData(characterId: string, dc: string = 'na'): Promis
   }
 
   const html = await response.text();
-  
+
   // 解析 HTML 並提取職業資料
   const parser = new ClassJobParser();
   const classJobData = parser.parse(html);
-  
+
   return {
     CharacterID: parseInt(characterId),
     ClassJobs: classJobData
@@ -321,17 +321,17 @@ async function handleAchievementsRequest(characterId: string, request: Request, 
   const url = new URL(request.url);
   const page = parseInt(url.searchParams.get('page') || '1');
   const dc = url.searchParams.get('dc') || 'na';
-  
+
   // 驗證資料中心參數
   if (!['na', 'jp'].includes(dc)) {
     return createResponse(
-      JSON.stringify({ error: 'Invalid data center. Supported values: na, jp' }), 
-      request, 
-      null, 
+      JSON.stringify({ error: 'Invalid data center. Supported values: na, jp' }),
+      request,
+      null,
       400
     );
   }
-  
+
   const cacheKey = `achievements:${dc}:${characterId}:page${page}`;
 
   try {
@@ -363,9 +363,9 @@ async function handleAchievementsRequest(characterId: string, request: Request, 
   } catch (error) {
     console.error('Error:', error);
     return createResponse(
-      JSON.stringify({ error: 'Internal Server Error' }), 
-      request, 
-      null, 
+      JSON.stringify({ error: 'Internal Server Error' }),
+      request,
+      null,
       500
     );
   }
@@ -373,7 +373,7 @@ async function handleAchievementsRequest(characterId: string, request: Request, 
 
 async function fetchAchievementsData(characterId: string, page: number = 1, dc: string = 'na'): Promise<any> {
   const url = `https://${dc}.finalfantasyxiv.com/lodestone/character/${characterId}/achievement?page=${page}`;
-  
+
   const response = await fetch(url);
   if (!response.ok) {
     if (response.status === 404) {
@@ -383,11 +383,11 @@ async function fetchAchievementsData(characterId: string, page: number = 1, dc: 
   }
 
   const html = await response.text();
-  
+
   // 解析 HTML 並提取成就資料
   const parser = new AchievementsParser();
   const achievementsData = parser.parse(html, page);
-  
+
   return {
     CharacterID: parseInt(characterId),
     ...achievementsData
@@ -397,17 +397,17 @@ async function fetchAchievementsData(characterId: string, page: number = 1, dc: 
 async function handleFreeCompanyRequest(freecompanyId: string, request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const dc = url.searchParams.get('dc') || 'na';
-  
+
   // 驗證資料中心參數
   if (!['na', 'jp'].includes(dc)) {
     return createResponse(
-      JSON.stringify({ error: 'Invalid data center. Supported values: na, jp' }), 
-      request, 
-      null, 
+      JSON.stringify({ error: 'Invalid data center. Supported values: na, jp' }),
+      request,
+      null,
       400
     );
   }
-  
+
   const cacheKey = `freecompany:${dc}:${freecompanyId}`;
 
   try {
@@ -439,9 +439,9 @@ async function handleFreeCompanyRequest(freecompanyId: string, request: Request,
   } catch (error) {
     console.error('Error:', error);
     return createResponse(
-      JSON.stringify({ error: 'Internal Server Error' }), 
-      request, 
-      null, 
+      JSON.stringify({ error: 'Internal Server Error' }),
+      request,
+      null,
       500
     );
   }
@@ -449,7 +449,7 @@ async function handleFreeCompanyRequest(freecompanyId: string, request: Request,
 
 async function fetchFreeCompanyData(freecompanyId: string, dc: string = 'na'): Promise<any> {
   const url = `https://${dc}.finalfantasyxiv.com/lodestone/freecompany/${freecompanyId}`;
-  
+
   const response = await fetch(url);
   if (!response.ok) {
     if (response.status === 404) {
@@ -459,11 +459,11 @@ async function fetchFreeCompanyData(freecompanyId: string, dc: string = 'na'): P
   }
 
   const html = await response.text();
-  
+
   // 解析 HTML 並提取 Free Company 資料
   const parser = new FreeCompanyParser();
   const freecompanyData = parser.parse(html);
-  
+
   return {
     FreeCompany: freecompanyData
   };
@@ -473,17 +473,17 @@ async function handleFreeCompanyMembersRequest(freecompanyId: string, request: R
   const url = new URL(request.url);
   const page = parseInt(url.searchParams.get('page') || '1');
   const dc = url.searchParams.get('dc') || 'na';
-  
+
   // 驗證資料中心參數
   if (!['na', 'jp'].includes(dc)) {
     return createResponse(
-      JSON.stringify({ error: 'Invalid data center. Supported values: na, jp' }), 
-      request, 
-      null, 
+      JSON.stringify({ error: 'Invalid data center. Supported values: na, jp' }),
+      request,
+      null,
       400
     );
   }
-  
+
   const cacheKey = `freecompany:${dc}:${freecompanyId}:members:page${page}`;
 
   try {
@@ -515,9 +515,9 @@ async function handleFreeCompanyMembersRequest(freecompanyId: string, request: R
   } catch (error) {
     console.error('Error:', error);
     return createResponse(
-      JSON.stringify({ error: 'Internal Server Error' }), 
-      request, 
-      null, 
+      JSON.stringify({ error: 'Internal Server Error' }),
+      request,
+      null,
       500
     );
   }
@@ -525,7 +525,7 @@ async function handleFreeCompanyMembersRequest(freecompanyId: string, request: R
 
 async function fetchFreeCompanyMembersData(freecompanyId: string, page: number = 1, dc: string = 'na'): Promise<any> {
   const url = `https://${dc}.finalfantasyxiv.com/lodestone/freecompany/${freecompanyId}/member?page=${page}`;
-  
+
   const response = await fetch(url);
   if (!response.ok) {
     if (response.status === 404) {
@@ -535,11 +535,11 @@ async function fetchFreeCompanyMembersData(freecompanyId: string, page: number =
   }
 
   const html = await response.text();
-  
+
   // 解析 HTML 並提取成員資料
   const parser = new FreeCompanyMembersParser();
   const membersData = parser.parse(html, page);
-  
+
   return {
     FreeCompanyID: freecompanyId,
     ...membersData
@@ -549,17 +549,17 @@ async function fetchFreeCompanyMembersData(freecompanyId: string, page: number =
 async function handleMinionsRequest(characterId: string, request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const dc = url.searchParams.get('dc') || 'na';
-  
+
   // 驗證資料中心參數
   if (!['na', 'jp'].includes(dc)) {
     return createResponse(
-      JSON.stringify({ error: 'Invalid data center. Supported values: na, jp' }), 
-      request, 
-      null, 
+      JSON.stringify({ error: 'Invalid data center. Supported values: na, jp' }),
+      request,
+      null,
       400
     );
   }
-  
+
   const cacheKey = `minions:${dc}:${characterId}`;
 
   try {
@@ -591,9 +591,9 @@ async function handleMinionsRequest(characterId: string, request: Request, env: 
   } catch (error) {
     console.error('Error:', error);
     return createResponse(
-      JSON.stringify({ error: 'Internal Server Error' }), 
-      request, 
-      null, 
+      JSON.stringify({ error: 'Internal Server Error' }),
+      request,
+      null,
       500
     );
   }
@@ -601,7 +601,7 @@ async function handleMinionsRequest(characterId: string, request: Request, env: 
 
 async function fetchMinionsData(characterId: string, dc: string = 'na'): Promise<any> {
   const url = `https://${dc}.finalfantasyxiv.com/lodestone/character/${characterId}/minion`;
-  
+
   const response = await fetch(url);
   if (!response.ok) {
     if (response.status === 404) {
@@ -611,11 +611,11 @@ async function fetchMinionsData(characterId: string, dc: string = 'na'): Promise
   }
 
   const html = await response.text();
-  
+
   // 解析 HTML 並提取寵物資料
   const parser = new MinionParser();
   const minionsData = parser.parse(html);
-  
+
   return {
     CharacterID: parseInt(characterId),
     ...minionsData
@@ -625,17 +625,17 @@ async function fetchMinionsData(characterId: string, dc: string = 'na'): Promise
 async function handleMountsRequest(characterId: string, request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const dc = url.searchParams.get('dc') || 'na';
-  
+
   // 驗證資料中心參數
   if (!['na', 'jp'].includes(dc)) {
     return createResponse(
-      JSON.stringify({ error: 'Invalid data center. Supported values: na, jp' }), 
-      request, 
-      null, 
+      JSON.stringify({ error: 'Invalid data center. Supported values: na, jp' }),
+      request,
+      null,
       400
     );
   }
-  
+
   const cacheKey = `mounts:${dc}:${characterId}`;
 
   try {
@@ -667,9 +667,9 @@ async function handleMountsRequest(characterId: string, request: Request, env: E
   } catch (error) {
     console.error('Error:', error);
     return createResponse(
-      JSON.stringify({ error: 'Internal Server Error' }), 
-      request, 
-      null, 
+      JSON.stringify({ error: 'Internal Server Error' }),
+      request,
+      null,
       500
     );
   }
@@ -677,7 +677,7 @@ async function handleMountsRequest(characterId: string, request: Request, env: E
 
 async function fetchMountsData(characterId: string, dc: string = 'na'): Promise<any> {
   const url = `https://${dc}.finalfantasyxiv.com/lodestone/character/${characterId}/mount`;
-  
+
   const response = await fetch(url);
   if (!response.ok) {
     if (response.status === 404) {
@@ -687,11 +687,11 @@ async function fetchMountsData(characterId: string, dc: string = 'na'): Promise<
   }
 
   const html = await response.text();
-  
+
   // 解析 HTML 並提取坐騎資料
   const parser = new MountParser();
   const mountsData = parser.parse(html);
-  
+
   return {
     CharacterID: parseInt(characterId),
     ...mountsData
