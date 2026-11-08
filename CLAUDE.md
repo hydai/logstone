@@ -55,7 +55,7 @@ npx tsc --noEmit
 
 ### Key Implementation Details
 
-- **Caching Strategy**: 
+- **Caching Strategy**:
   - Uses Cloudflare KV namespace "LOGSTONE"
   - Basic data: 24-hour cache
   - Collections/achievements: 48-hour cache
@@ -68,7 +68,7 @@ npx tsc --noEmit
   - Regex-based data extraction
   - Error handling for missing elements
 
-- **CORS Handling**: 
+- **CORS Handling**:
   - Production: Restricted to ff14.tw domains only
   - Proper preflight request handling
   - No localhost exceptions in production
