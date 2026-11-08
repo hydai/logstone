@@ -754,6 +754,7 @@ open test.html
 - `profile/mount.json`、`profile/minion.json` 改成讀官網的手機版頁面
 - `freecompany/freecompany.json` 的 `GRAND_COMPANY` 和 `RANKING` 也讀得懂日文版的頁面，大國防聯軍的名稱也不會帶著後面的空白
 - `profile/gearset.json` 拿掉了：它讀的是以前直接寫在頁面上的裝備提示框，官網現在改成滑過去才另外載入，一個欄位都對不到。裝備的圖示與染色改由 `character-parser.ts` 直接讀每一格
+- `profile/character.json` 的 `GRAND_COMPANY` 讀到「 / 」前面的整個名稱：英文名稱有空白（Order of the Twin Adder），以前只留下最後一個字
 
 ## 授權
 

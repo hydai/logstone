@@ -51,6 +51,15 @@ describe('CharacterParser on the profile page', () => {
     expect(c.Bio).toBe('一行目\n二行目');
   });
 
+  // The English names have spaces ("Order of the Twin Adder", "Immortal Flames"); the Japanese ones do not.
+  test('reads the whole grand company name and the rank, in English and in Japanese', () => {
+    expect(new CharacterParser().parse(fixture('profile-na.html')).GrandCompany).toEqual({
+      Name: 'Order of the Twin Adder',
+      Rank: 'Second Serpent Lieutenant',
+    });
+    expect(new CharacterParser().parse(fixture('profile-jp.html')).GrandCompany).toEqual({ Name: '双蛇党', Rank: '少牙士' });
+  });
+
   test('the free company name is the text of its link, decoded', () => {
     const c = new CharacterParser().parse(profileWith(['>Example Company</a>', '>Example &amp; Company &lt;3</a>']));
     expect(c.FreeCompany.Name).toBe('Example & Company <3');

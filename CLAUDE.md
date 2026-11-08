@@ -164,6 +164,7 @@ The `wrangler.toml` file contains:
   - `search/character.json` is upstream's file at commit 245db29 plus `ENTRY.FREE_COMPANY` (the company's ID and name) and `TOTAL`
   - `freecompany/freecompany.json`: the `GRAND_COMPANY` and `RANKING` regexes also read the Japanese page, and the grand company name comes without the space before its standing
   - `profile/gearset.json` is removed: it read item tooltips that Lodestone no longer writes into the page. The gear is read in `character-parser.ts` instead (see Character Gear)
+  - `profile/character.json`: the `GRAND_COMPANY` regex reads the whole name before ` / `; the English names have spaces ("Order of the Twin Adder"), and the old regex kept only the last word
 - **Lodestone site**: `dc` picks which language site of Lodestone is read, `na` (English) or `jp` (Japanese); both show the same characters and Free Companies, whatever their data center
 - **Read-only**: No write operations to Lodestone
 - **CORS**: Must maintain security restrictions
