@@ -1,5 +1,6 @@
 import { parseDocument } from 'htmlparser2';
 import { Element, Document } from 'domhandler';
+import { ParseError } from '../lib/http';
 import * as classjobSelectors from '../lib/lodestone-css-selectors/profile/classjob.json';
 
 interface SelectorDefinition {
@@ -41,14 +42,26 @@ export class ClassJobParser {
   parse(html: string): ClassJobData {
     const document = parseDocument(html);
     const rawData = this.extractAllJobs(document);
-    return this.organizeJobData(rawData);
+    const jobs = this.organizeJobData(rawData);
+
+    // The Class/Job page lists every class and job, the locked ones too. Not a single row read is a
+    // layout the selectors do not know, or another page: answering it would keep no jobs for a day.
+    const rows = [...Object.values(jobs.CombatJobs), jobs.CraftingJobs, jobs.GatheringJobs].reduce(
+      (count, group) => count + Object.keys(group).length,
+      0
+    );
+    if (rows === 0) {
+      throw new ParseError('The page has no class or job row the parser can read');
+    }
+
+    return jobs;
   }
 
   private extractAllJobs(document: Document): Record<string, JobData> {
     const result: Record<string, JobData> = {};
 
     for (const jobName in this.selectors) {
-      if (this.selectors.hasOwnProperty(jobName) && jobName !== 'default') {
+      if (Object.prototype.hasOwnProperty.call(this.selectors, jobName) && jobName !== 'default') {
         try {
           const jobData = this.extractJobData(document, this.selectors[jobName]);
           if (jobData && Object.keys(jobData).length > 0) {
@@ -182,11 +195,11 @@ export class ClassJobParser {
   private matchesSelector(element: Element, selector: string): boolean {
     const pseudoMatch = selector.match(/^([^:]+)(:nth-child\((\d+)\))?$/);
     if (!pseudoMatch) return false;
-    
+
     const [, baseSelector, , nthChild] = pseudoMatch;
-    
+
     let matches = false;
-    
+
     if (baseSelector.startsWith('.')) {
       const className = baseSelector.substring(1);
       matches = element.attribs?.class?.split(' ').includes(className) || false;
@@ -210,7 +223,7 @@ export class ClassJobParser {
     } else {
       matches = element.name === baseSelector;
     }
-    
+
     if (matches && nthChild) {
       const index = parseInt(nthChild);
       const parent = element.parent;
@@ -220,7 +233,7 @@ export class ClassJobParser {
         matches = elementIndex === index;
       }
     }
-    
+
     return matches;
   }
 
@@ -230,7 +243,7 @@ export class ClassJobParser {
 
   private getTextContent(element: Element): string {
     let text = '';
-    
+
     if (element.children) {
       for (const child of element.children) {
         if (child.type === 'text') {
@@ -240,7 +253,7 @@ export class ClassJobParser {
         }
       }
     }
-    
+
     return text.trim();
   }
 
@@ -248,7 +261,7 @@ export class ClassJobParser {
     try {
       const namedGroupRegex = regex.replace(/\?P<(\w+)>/g, '?<$1>');
       const match = new RegExp(namedGroupRegex).exec(value);
-      
+
       if (match) {
         if (match.groups && Object.keys(match.groups).length > 0) {
           return match.groups;
@@ -281,9 +294,9 @@ export class ClassJobParser {
 
     const tankJobs = ['PALADIN', 'WARRIOR', 'DARKKNIGHT', 'GUNBREAKER'];
     const healerJobs = ['WHITEMAGE', 'SCHOLAR', 'ASTROLOGIAN', 'SAGE'];
-    const meleeDPSJobs = ['MONK', 'DRAGOON', 'NINJA', 'SAMURAI', 'REAPER'];
+    const meleeDPSJobs = ['MONK', 'DRAGOON', 'NINJA', 'SAMURAI', 'REAPER', 'VIPER', 'BEASTMASTER'];
     const rangedDPSJobs = ['BARD', 'MACHINIST', 'DANCER'];
-    const magicalDPSJobs = ['BLACKMAGE', 'SUMMONER', 'REDMAGE', 'BLUEMAGE'];
+    const magicalDPSJobs = ['BLACKMAGE', 'SUMMONER', 'REDMAGE', 'PICTOMANCER', 'BLUEMAGE'];
     const craftingJobs = ['CARPENTER', 'BLACKSMITH', 'ARMORER', 'GOLDSMITH', 'LEATHERWORKER', 'WEAVER', 'ALCHEMIST', 'CULINARIAN'];
     const gatheringJobs = ['MINER', 'BOTANIST', 'FISHER'];
     const specialContent = ['EUREKA', 'BOZJA'];
@@ -328,12 +341,15 @@ export class ClassJobParser {
       'NINJA': 'Ninja',
       'SAMURAI': 'Samurai',
       'REAPER': 'Reaper',
+      'VIPER': 'Viper',
+      'BEASTMASTER': 'Beastmaster',
       'BARD': 'Bard',
       'MACHINIST': 'Machinist',
       'DANCER': 'Dancer',
       'BLACKMAGE': 'BlackMage',
       'SUMMONER': 'Summoner',
       'REDMAGE': 'RedMage',
+      'PICTOMANCER': 'Pictomancer',
       'BLUEMAGE': 'BlueMage',
       'CARPENTER': 'Carpenter',
       'BLACKSMITH': 'Blacksmith',

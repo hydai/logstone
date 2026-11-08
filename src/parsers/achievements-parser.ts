@@ -1,6 +1,8 @@
 import { parseDocument } from 'htmlparser2';
-import { Element, Document } from 'domhandler';
+import { Element, Document, isTag } from 'domhandler';
+import { ParseError } from '../lib/http';
 import * as achievementsSelectors from '../lib/lodestone-css-selectors/profile/achievements.json';
+import * as characterSelectors from '../lib/lodestone-css-selectors/profile/character.json';
 
 interface SelectorDefinition {
   selector: string;
@@ -36,16 +38,37 @@ export class AchievementsParser {
 
   parse(html: string, currentPage: number = 1): AchievementsData {
     const document = parseDocument(html);
-    
+
+    // Every character page has the character's name in its frame, the ones that may not be viewed
+    // too. A page without it is a layout the selectors do not know, or another page altogether.
+    const name = this.querySelector(document, characterSelectors.NAME.selector);
+    if (!name || !this.getTextContent(name)) {
+      throw new ParseError('The page has no character name, so it is not a character page the parser knows');
+    }
+
+    // The name alone cannot tell the history from the profile, which Lodestone could send after a
+    // redirect. The achievement section can: it holds the total, the pager and the rows, and it is drawn
+    // even when the history is empty.
+    if (!this.querySelector(document, this.selectors.ROOT.selector)) {
+      throw new ParseError('The page has no achievement section, so it is not an achievement history');
+    }
+
     // 提取成就列表
     const achievements = this.extractAchievements(document);
-    
+
     // 提取總成就數
     const totalAchievements = this.extractTotalAchievements(document);
-    
+
+    // The page counts achievements but not one row could be read: it is not the layout these selectors
+    // know, and an empty history would be kept for two days. A total of 0, or no total at all, with no
+    // row is a history that really is empty, and stays an answer.
+    if (achievements.length === 0 && totalAchievements > 0) {
+      throw new ParseError(`The page counts ${totalAchievements} achievements but no row could be read`);
+    }
+
     // 提取成就點數
     const achievementPoints = this.extractAchievementPoints(document);
-    
+
     // 提取分頁資訊
     const pagination = this.extractPagination(document, currentPage);
 
@@ -59,17 +82,17 @@ export class AchievementsParser {
 
   private extractAchievements(document: Document): Achievement[] {
     const achievements: Achievement[] = [];
-    
+
     // 取得所有成就項目
     const entryElements = this.querySelectorAll(document, this.selectors.ENTRY.ROOT.selector);
-    
+
     for (const element of entryElements) {
       const achievement = this.extractAchievementFromElement(element);
       if (achievement) {
         achievements.push(achievement);
       }
     }
-    
+
     return achievements;
   }
 
@@ -92,7 +115,9 @@ export class AchievementsParser {
       const timeText = timeElement ? this.getTextContent(timeElement) : '';
       const timeMatch = this.applyRegex(timeText, this.selectors.ENTRY.TIME.regex);
       const timestamp = timeMatch?.Timestamp ? parseInt(timeMatch.Timestamp) * 1000 : 0;
-      const time = timestamp ? new Date(timestamp).toISOString() : '';
+      const date = new Date(timestamp);
+      // 0 is no date. A number past the last time a Date can hold would make toISOString throw.
+      const time = timestamp && !Number.isNaN(date.getTime()) ? date.toISOString() : '';
 
       if (id && name) {
         return { ID: id, Name: name, Time: time };
@@ -100,7 +125,7 @@ export class AchievementsParser {
     } catch (error) {
       console.error('Error extracting achievement:', error);
     }
-    
+
     return null;
   }
 
@@ -125,11 +150,11 @@ export class AchievementsParser {
 
     const pageText = this.getTextContent(pageInfoElement);
     const pageMatch = this.applyRegex(pageText, this.selectors.PAGE_INFO.regex);
-    
+
     if (pageMatch?.CurrentPage && pageMatch?.NumPages) {
       const page = parseInt(pageMatch.CurrentPage);
       const pageTotal = parseInt(pageMatch.NumPages);
-      
+
       return {
         Page: page,
         PageTotal: pageTotal,
@@ -137,7 +162,7 @@ export class AchievementsParser {
         PagePrev: page > 1 ? page - 1 : null
       };
     }
-    
+
     return undefined;
   }
 
@@ -149,12 +174,12 @@ export class AchievementsParser {
   private querySelectorAll(node: Document | Element, selector: string): Element[] {
     const results: Element[] = [];
     const parts = this.parseSelector(selector);
-    
+
     if (parts.length === 0) return results;
-    
+
     const firstPart = parts[0];
     this.findDescendants(node, firstPart.selector, results);
-    
+
     return results;
   }
 
@@ -168,7 +193,9 @@ export class AchievementsParser {
         for (const el of current) {
           if ('children' in el) {
             for (const child of el.children) {
-              if (child.type === 'tag' && this.matchesSelector(child as Element, part.selector)) {
+              // isTag, not type === 'tag': htmlparser2 gives <script> and <style> a type of their own,
+              // and the date of an achievement is in a <script>.
+              if (isTag(child) && this.matchesSelector(child as Element, part.selector)) {
                 next.push(child as Element);
               }
             }
@@ -205,7 +232,7 @@ export class AchievementsParser {
   private findDescendants(node: Document | Element, selector: string, results: Element[]): void {
     if ('children' in node) {
       for (const child of node.children) {
-        if (child.type === 'tag') {
+        if (isTag(child)) {
           const element = child as Element;
           if (this.matchesSelector(element, selector)) {
             results.push(element);
@@ -219,11 +246,11 @@ export class AchievementsParser {
   private matchesSelector(element: Element, selector: string): boolean {
     const pseudoMatch = selector.match(/^([^:]+)(:nth-child\((\d+)\))?$/);
     if (!pseudoMatch) return false;
-    
+
     const [, baseSelector, , nthChild] = pseudoMatch;
-    
+
     let matches = false;
-    
+
     if (baseSelector.startsWith('.')) {
       const className = baseSelector.substring(1);
       matches = element.attribs?.class?.split(' ').includes(className) || false;
@@ -247,7 +274,7 @@ export class AchievementsParser {
     } else {
       matches = element.name === baseSelector;
     }
-    
+
     if (matches && nthChild) {
       const index = parseInt(nthChild);
       const parent = element.parent;
@@ -257,7 +284,7 @@ export class AchievementsParser {
         matches = elementIndex === index;
       }
     }
-    
+
     return matches;
   }
 
@@ -267,7 +294,7 @@ export class AchievementsParser {
 
   private getTextContent(element: Element): string {
     let text = '';
-    
+
     if (element.children) {
       for (const child of element.children) {
         if (child.type === 'text') {
@@ -277,7 +304,7 @@ export class AchievementsParser {
         }
       }
     }
-    
+
     return text.trim();
   }
 
@@ -285,7 +312,7 @@ export class AchievementsParser {
     try {
       const namedGroupRegex = regex.replace(/\?P<(\w+)>/g, '?<$1>');
       const match = new RegExp(namedGroupRegex).exec(value);
-      
+
       if (match) {
         if (match.groups && Object.keys(match.groups).length > 0) {
           return match.groups;

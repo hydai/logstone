@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<!--
+  Minimal stand-in for a Lodestone Class/Job page (English).
+  Real page: https://na.finalfantasyxiv.com/lodestone/character/<id>/class_job/
+
+  Only the elements reached by the selectors in
+  src/lib/lodestone-css-selectors/profile/classjob.json are kept, in the same nesting and
+  order as the real page (nth-child positions matter): the seven job lists, each row with its
+  icon slot, level, name and experience. Magical Ranged DPS shares its role box with
+  Physical Ranged DPS, after a heading of its own, which is why classjob.json reaches it as
+  ul.character__job:nth-child(4).
+  Levels are those of a real page. The experience of a job that is still levelling is made
+  up; "- / -" is a job that is not unlocked and "-- / --" one with nothing left to earn.
+  The Occult Crescent, Bozja and Eureka blocks that follow the lists are not included.
+-->
+<html lang="en">
+<body>
+<div class="character__content selected">
+  <h3 class="heading--md">DoW/DoM</h3>
+  <div class="clearfix">
+    <div class="character__job__role">
+      <h4 class="heading--lead">Tank</h4>
+      <ul class="character__job clearfix">
+        <li><i class="character__job__icon"></i><div class="character__job__level">-</div><div class="character__job__name js__tooltip">Gladiator</div><div class="character__job__exp">- / -</div></li>
+        <li><i class="character__job__icon"></i><div class="character__job__level">31</div><div class="character__job__name js__tooltip">Warrior</div><div class="character__job__exp">1,001 / 74,000</div></li>
+        <li><i class="character__job__icon"></i><div class="character__job__level">-</div><div class="character__job__name js__tooltip">Dark Knight</div><div class="character__job__exp">- / -</div></li>
+        <li><i class="character__job__icon"></i><div class="character__job__level">60</div><div class="character__job__name js__tooltip">Gunbreaker</div><div class="character__job__exp">0 / 1,387,000</div></li>
+      </ul>
+    </div>
+    <div class="character__job__role">
+      <h4 class="heading--lead">Healer</h4>
+      <ul class="character__job clearfix">
+        <li><i class="character__job__icon"></i><div class="character__job__level">100</div><div class="character__job__name js__tooltip">White Mage</div><div class="character__job__exp">-- / --</div></li>
+        <li><i class="character__job__icon"></i><div class="character__job__level">100</div><div class="character__job__name js__tooltip">Scholar</div><div class="character__job__exp">-- / --</div></li>
+        <li><i class="character__job__icon"></i><div class="character__job__level">43</div><div class="character__job__name js__tooltip">Astrologian</div><div class="character__job__exp">1,002 / 179,000</div></li>
+        <li><i class="character__job__icon"></i><div class="character__job__level">70</div><div class="character__job__name js__tooltip">Sage</div><div class="character__job__exp">0 / 2,923,000</div></li>
+      </ul>
+    </div>
+  </div>
+  <div class="clearfix">
+    <div class="character__job__role">
+      <h4 class="heading--lead">Melee DPS</h4>
+      <ul class="character__job clearfix">
+        <li><i class="character__job__icon"></i><div class="character__job__level">70</div><div class="character__job__name js__tooltip">Monk</div><div class="character__job__exp">1,003 / 2,923,000</div></li>
+        <li><i class="character__job__icon"></i><div class="character__job__level">70</div><div class="character__job__name js__tooltip">Dragoon</div><div class="character__job__exp">1,004 / 2,923,000</div></li>
+        <li><i class="character__job__icon"></i><div class="character__job__level">61</div><div class="character__job__name js__tooltip">Ninja</div><div class="character__job__exp">1,005 / 1,456,000</div></li>
+        <li><i class="character__job__icon"></i><div class="character__job__level">80</div><div class="character__job__name js__tooltip">Samurai</div><div class="character__job__exp">1,006 / 5,992,000</div></li>
+        <li><i class="character__job__icon"></i><div class="character__job__level">100</div><div class="character__job__name js__tooltip">Reaper</div><div class="character__job__exp">-- / --</div></li>
+        <li><i class="character__job__icon"></i><div class="character__job__level">80</div><div class="character__job__name js__tooltip">Viper</div><div class="character__job__exp">0 / 5,992,000</div></li>
+        <li><i class="character__job__icon"></i><div class="character__job__level">50</div><div class="character__job__name js__tooltip">Beastmaster</div><div class="character__job__exp">-- / --</div></li>
+      </ul>
+    </div>
+    <div class="character__job__role">
+      <h4 class="heading--lead">Physical Ranged DPS</h4>
+      <ul class="character__job clearfix">
+        <li><i class="character__job__icon"></i><div class="character__job__level">100</div><div class="character__job__name js__tooltip">Bard</div><div class="character__job__exp">-- / --</div></li>
+        <li><i class="character__job__icon"></i><div class="character__job__level">63</div><div class="character__job__name js__tooltip">Machinist</div><div class="character__job__exp">1,007 / 1,621,000</div></li>
+        <li><i class="character__job__icon"></i><div class="character__job__level">83</div><div class="character__job__name js__tooltip">Dancer</div><div class="character__job__exp">1,008 / 7,205,000</div></li>
+      </ul>
+      <h4 class="heading--lead">Magical Ranged DPS</h4>
+      <ul class="character__job clearfix">
+        <li><i class="character__job__icon"></i><div class="character__job__level">100</div><div class="character__job__name js__tooltip">Black Mage</div><div class="character__job__exp">-- / --</div></li>
+        <li><i class="character__job__icon"></i><div class="character__job__level">100</div><div class="character__job__name js__tooltip">Summoner</div><div class="character__job__exp">-- / --</div></li>
+        <li><i class="character__job__icon"></i><div class="character__job__level">60</div><div class="character__job__name js__tooltip">Red Mage</div><div class="character__job__exp">1,009 / 1,387,000</div></li>
+        <li><i class="character__job__icon"></i><div class="character__job__level">91</div><div class="character__job__name js__tooltip">Pictomancer</div><div class="character__job__exp">1,010 / 13,659,000</div></li>
+        <li><i class="character__job__icon"></i><div class="character__job__level">50</div><div class="character__job__name js__tooltip">Blue Mage</div><div class="character__job__exp">1,011 / 421,000</div></li>
+      </ul>
+    </div>
+  </div>
+  <h3 class="heading--md">DoH/DoL</h3>
+  <div class="clearfix">
+    <div class="character__job__role">
+      <h4 class="heading--lead">Disciples of the Hand</h4>
+      <ul class="character__job clearfix">
+        <li><i class="character__job__icon"></i><div class="character__job__level">74</div><div class="character__job__name js__tooltip">Carpenter</div><div class="character__job__exp">1,012 / 3,532,000</div></li>
+        <li><i class="character__job__icon"></i><div class="character__job__level">66</div><div class="character__job__name js__tooltip">Blacksmith</div><div class="character__job__exp">1,013 / 1,968,000</div></li>
+        <li><i class="character__job__icon"></i><div class="character__job__level">38</div><div class="character__job__name js__tooltip">Armorer</div><div class="character__job__exp">1,014 / 133,000</div></li>
+        <li><i class="character__job__icon"></i><div class="character__job__level">36</div><div class="character__job__name js__tooltip">Goldsmith</div><div class="character__job__exp">1,015 / 113,000</div></li>
+        <li><i class="character__job__icon"></i><div class="character__job__level">26</div><div class="character__job__name js__tooltip">Leatherworker</div><div class="character__job__exp">1,016 / 49,200</div></li>
+        <li><i class="character__job__icon"></i><div class="character__job__level">38</div><div class="character__job__name js__tooltip">Weaver</div><div class="character__job__exp">1,017 / 133,000</div></li>
+        <li><i class="character__job__icon"></i><div class="character__job__level">43</div><div class="character__job__name js__tooltip">Alchemist</div><div class="character__job__exp">1,018 / 179,000</div></li>
+        <li><i class="character__job__icon"></i><div class="character__job__level">44</div><div class="character__job__name js__tooltip">Culinarian</div><div class="character__job__exp">1,019 / 187,000</div></li>
+      </ul>
+    </div>
+    <div class="character__job__role">
+      <h4 class="heading--lead">Disciples of the Land</h4>
+      <ul class="character__job clearfix">
+        <li><i class="character__job__icon"></i><div class="character__job__level">91</div><div class="character__job__name js__tooltip">Miner</div><div class="character__job__exp">1,020 / 13,659,000</div></li>
+        <li><i class="character__job__icon"></i><div class="character__job__level">100</div><div class="character__job__name js__tooltip">Botanist</div><div class="character__job__exp">-- / --</div></li>
+        <li><i class="character__job__icon"></i><div class="character__job__level">13</div><div class="character__job__name js__tooltip">Fisher</div><div class="character__job__exp">1,021 / 10,200</div></li>
+      </ul>
+    </div>
+  </div>
+</div>
+</body>
+</html>

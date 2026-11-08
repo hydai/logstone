@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<!--
+  Minimal stand-in for the Lodestone character search page (English), a search that finds nobody.
+  Real page: https://na.finalfantasyxiv.com/lodestone/character/?q=<name>&worldname=<world>&page=<page>
+
+  Only the elements reached by the selectors in src/lib/lodestone-css-selectors/search/character.json
+  are kept, in the same nesting and order as the real page: the total, which says 0, and the notice
+  that nothing matched. The page has no pager and no row. As on the real page, the outer form is
+  never closed.
+-->
+<html lang="en">
+<body>
+<div class="ldst__window">
+  <form method="get" action="?">
+    <form method="get" action="?" class="right">
+      <div class="select-pulldown__count">
+        <div class="parts__total">0 Total</div>
+      </div>
+    </form>
+    <p class="parts__zero">Your search yielded no results.</p>
+  </form>
+</div>
+</body>
+</html>

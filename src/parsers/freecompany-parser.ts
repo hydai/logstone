@@ -1,5 +1,6 @@
 import { parseDocument } from 'htmlparser2';
 import { Element, Document } from 'domhandler';
+import { ParseError } from '../lib/http';
 import * as freecompanySelectors from '../lib/lodestone-css-selectors/freecompany/freecompany.json';
 import * as focusSelectors from '../lib/lodestone-css-selectors/freecompany/focus.json';
 import * as reputationSelectors from '../lib/lodestone-css-selectors/freecompany/reputation.json';
@@ -77,6 +78,12 @@ export class FreeCompanyParser {
 
     // 處理特殊欄位
     const processed = this.processSpecialFields(result);
+
+    // Every free company page shows the company's name. A page without it is a layout the selectors
+    // do not know, or another page: answering it would keep a nameless company for a day.
+    if (!processed.Name) {
+      throw new ParseError('The page has no company name, so it is not a free company page the parser knows');
+    }
 
     // 解析 Focus
     const focus = this.extractFocus(document);
@@ -165,21 +172,21 @@ export class FreeCompanyParser {
 
   private extractFocus(document: Document): string[] {
     const focus: string[] = [];
-    
+
     // focusSelectors 結構是扁平的，每個鍵是不同的 focus 類型
     for (const focusType in focusSelectors) {
       if (Object.prototype.hasOwnProperty.call(focusSelectors, focusType) && focusType !== 'default' && focusType !== 'NOT_SPECIFIED') {
         const selector = (focusSelectors as any)[focusType];
-        
+
         // 檢查每個 focus 項目的狀態
         if (selector.NAME && selector.STATUS) {
           const nameElement = this.querySelector(document, selector.NAME.selector);
           const statusElement = this.querySelector(document, selector.STATUS.selector);
-          
+
           if (nameElement && statusElement) {
             const name = this.getTextContent(nameElement);
             const classAttr = this.getAttribute(statusElement, 'class') || '';
-            
+
             // 如果沒有 'off' class，表示此項目是活躍的
             if (name && !classAttr.includes('freecompany__focus_icon--off')) {
               focus.push(name);
@@ -188,27 +195,27 @@ export class FreeCompanyParser {
         }
       }
     }
-    
+
     return focus;
   }
 
   private extractSeeking(document: Document): string[] {
     const seeking: string[] = [];
-    
+
     // seekingSelectors 結構也是扁平的，每個鍵是不同的職業類型
     for (const roleType in seekingSelectors) {
       if (Object.prototype.hasOwnProperty.call(seekingSelectors, roleType) && roleType !== 'default' && roleType !== 'NOT_SPECIFIED') {
         const selector = (seekingSelectors as any)[roleType];
-        
+
         // 檢查每個職業的招募狀態
         if (selector.NAME && selector.STATUS) {
           const nameElement = this.querySelector(document, selector.NAME.selector);
           const statusElement = this.querySelector(document, selector.STATUS.selector);
-          
+
           if (nameElement && statusElement) {
             const name = this.getTextContent(nameElement);
             const classAttr = this.getAttribute(statusElement, 'class') || '';
-            
+
             // 如果沒有 'off' class，表示正在招募此職業
             if (name && !classAttr.includes('freecompany__role__icon--off')) {
               seeking.push(name);
@@ -217,13 +224,13 @@ export class FreeCompanyParser {
         }
       }
     }
-    
+
     return seeking;
   }
 
   private extractReputation(document: Document): any {
     const reputation: any = {};
-    
+
     for (const gcName in reputationSelectors) {
       if (Object.prototype.hasOwnProperty.call(reputationSelectors, gcName) && gcName !== 'default') {
         const value = this.extractField(document, (reputationSelectors as any)[gcName]);
@@ -232,7 +239,7 @@ export class FreeCompanyParser {
         }
       }
     }
-    
+
     return reputation;
   }
 
@@ -282,12 +289,12 @@ export class FreeCompanyParser {
   private querySelectorAll(node: Document | Element, selector: string): Element[] {
     const results: Element[] = [];
     const parts = this.parseSelector(selector);
-    
+
     if (parts.length === 0) return results;
-    
+
     const firstPart = parts[0];
     this.findDescendants(node, firstPart.selector, results);
-    
+
     return results;
   }
 
@@ -352,11 +359,11 @@ export class FreeCompanyParser {
   private matchesSelector(element: Element, selector: string): boolean {
     const pseudoMatch = selector.match(/^([^:]+)(:nth-child\((\d+)\)|:nth-of-type\((\d+)\))?$/);
     if (!pseudoMatch) return false;
-    
+
     const [, baseSelector, , nthChild, nthOfType] = pseudoMatch;
-    
+
     let matches = false;
-    
+
     if (baseSelector.startsWith('.')) {
       const className = baseSelector.substring(1);
       matches = element.attribs?.class?.split(' ').includes(className) || false;
@@ -380,7 +387,7 @@ export class FreeCompanyParser {
     } else {
       matches = element.name === baseSelector;
     }
-    
+
     if (matches && nthChild) {
       const index = parseInt(nthChild);
       const parent = element.parent;
@@ -393,14 +400,14 @@ export class FreeCompanyParser {
       const index = parseInt(nthOfType);
       const parent = element.parent;
       if (parent && 'children' in parent) {
-        const siblings = parent.children.filter(child => 
+        const siblings = parent.children.filter(child =>
           child.type === 'tag' && (child as Element).name === element.name
         );
         const elementIndex = siblings.indexOf(element) + 1;
         matches = elementIndex === index;
       }
     }
-    
+
     return matches;
   }
 
@@ -410,7 +417,7 @@ export class FreeCompanyParser {
 
   private getTextContent(element: Element): string {
     let text = '';
-    
+
     if (element.children) {
       for (const child of element.children) {
         if (child.type === 'text') {
@@ -420,7 +427,7 @@ export class FreeCompanyParser {
         }
       }
     }
-    
+
     return text.trim();
   }
 
@@ -428,7 +435,7 @@ export class FreeCompanyParser {
     try {
       const namedGroupRegex = regex.replace(/\?P<(\w+)>/g, '?<$1>');
       const match = new RegExp(namedGroupRegex).exec(value);
-      
+
       if (match) {
         if (match.groups && Object.keys(match.groups).length > 0) {
           return match.groups;

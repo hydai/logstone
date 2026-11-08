@@ -1,5 +1,6 @@
 import { parseDocument } from 'htmlparser2';
 import { Element, Document } from 'domhandler';
+import { ParseError } from '../lib/http';
 import * as mountSelectors from '../lib/lodestone-css-selectors/profile/mount.json';
 
 interface MountData {
@@ -20,7 +21,7 @@ export class MountParser {
     // 解析坐騎列表
     if (mountSelectors.MOUNTS?.ROOT) {
       const elements = this.querySelectorAll(document, mountSelectors.MOUNTS.ROOT.selector);
-      
+
       for (const element of elements) {
         const mount = this.parseMountEntry(element);
         if (mount) {
@@ -42,6 +43,20 @@ export class MountParser {
       }
     }
 
+    // The page counts mounts but not one row could be read: it is not the layout these selectors know,
+    // and an empty list would be kept as the answer. A total of 0, or no total to be found (it is then
+    // the number of rows, 0 here), is a collection that really is empty, and stays an answer.
+    if (mounts.length === 0 && total > 0) {
+      throw new ParseError(`The page counts ${total} mounts but no row could be read`);
+    }
+
+    // Even an empty collection is drawn inside the mobile layout. With no row and no such layout, the page
+    // is blank, someone else's (a challenge or an error page), or the desktop page Lodestone sends when it
+    // ignores the User-Agent: not an empty collection to keep for two days.
+    if (mounts.length === 0 && !this.querySelector(document, mountSelectors.PAGE.selector)) {
+      throw new ParseError('The page has no mount row and is not the mobile Lodestone layout');
+    }
+
     return {
       Mounts: mounts,
       Total: total
@@ -51,15 +66,10 @@ export class MountParser {
   private parseMountEntry(element: Element): MountData | null {
     const mount: any = {};
 
-    // 解析 tooltip URL 來獲取名稱
-    if (mountSelectors.MOUNTS.TOOLTIP) {
-      // 直接從 element 本身獲取 attribute
-      const tooltipUrl = this.getAttribute(element, mountSelectors.MOUNTS.TOOLTIP.attribute || 'data-tooltip_href') || '';
-      if (tooltipUrl) {
-        // 從 URL 中提取最後一部分作為 ID
-        const parts = tooltipUrl.split('/');
-        mount.Name = `Mount-${parts[parts.length - 1]}`;
-      }
+    // The mobile page writes the name in the row itself (the desktop page only links to a tooltip)
+    const nameElement = this.querySelector(element, mountSelectors.MOUNTS.NAME.selector);
+    if (nameElement) {
+      mount.Name = this.getTextContent(nameElement);
     }
 
     // 解析圖標
@@ -86,12 +96,12 @@ export class MountParser {
   private querySelectorAll(node: Document | Element, selector: string): Element[] {
     const results: Element[] = [];
     const parts = this.parseSelector(selector);
-    
+
     if (parts.length === 0) return results;
-    
+
     const firstPart = parts[0];
     this.findDescendants(node, firstPart.selector, results);
-    
+
     return results;
   }
 
@@ -156,11 +166,11 @@ export class MountParser {
   private matchesSelector(element: Element, selector: string): boolean {
     const pseudoMatch = selector.match(/^([^:]+)(:nth-child\((\d+)\)|:nth-of-type\((\d+)\))?$/);
     if (!pseudoMatch) return false;
-    
+
     const [, baseSelector, , nthChild, nthOfType] = pseudoMatch;
-    
+
     let matches = false;
-    
+
     if (baseSelector.startsWith('.')) {
       const className = baseSelector.substring(1);
       matches = element.attribs?.class?.split(' ').includes(className) || false;
@@ -184,7 +194,7 @@ export class MountParser {
     } else {
       matches = element.name === baseSelector;
     }
-    
+
     if (matches && nthChild) {
       const index = parseInt(nthChild);
       const parent = element.parent;
@@ -197,14 +207,14 @@ export class MountParser {
       const index = parseInt(nthOfType);
       const parent = element.parent;
       if (parent && 'children' in parent) {
-        const siblings = parent.children.filter(child => 
+        const siblings = parent.children.filter(child =>
           child.type === 'tag' && (child as Element).name === element.name
         );
         const elementIndex = siblings.indexOf(element) + 1;
         matches = elementIndex === index;
       }
     }
-    
+
     return matches;
   }
 
@@ -214,7 +224,7 @@ export class MountParser {
 
   private getTextContent(element: Element): string {
     let text = '';
-    
+
     if (element.children) {
       for (const child of element.children) {
         if (child.type === 'text') {
@@ -224,7 +234,7 @@ export class MountParser {
         }
       }
     }
-    
+
     return text.trim();
   }
 }

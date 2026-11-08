@@ -1,5 +1,6 @@
 import { parseDocument } from 'htmlparser2';
 import { Element, Document } from 'domhandler';
+import { ParseError } from '../lib/http';
 import * as minionSelectors from '../lib/lodestone-css-selectors/profile/minion.json';
 
 interface MinionData {
@@ -20,7 +21,7 @@ export class MinionParser {
     // 解析寵物列表
     if (minionSelectors.MINIONS?.ROOT) {
       const elements = this.querySelectorAll(document, minionSelectors.MINIONS.ROOT.selector);
-      
+
       for (const element of elements) {
         const minion = this.parseMinionEntry(element);
         if (minion) {
@@ -42,6 +43,20 @@ export class MinionParser {
       }
     }
 
+    // The page counts minions but not one row could be read: it is not the layout these selectors know,
+    // and an empty list would be kept as the answer. A total of 0, or no total to be found (it is then
+    // the number of rows, 0 here), is a collection that really is empty, and stays an answer.
+    if (minions.length === 0 && total > 0) {
+      throw new ParseError(`The page counts ${total} minions but no row could be read`);
+    }
+
+    // Even an empty collection is drawn inside the mobile layout. With no row and no such layout, the page
+    // is blank, someone else's (a challenge or an error page), or the desktop page Lodestone sends when it
+    // ignores the User-Agent: not an empty collection to keep for two days.
+    if (minions.length === 0 && !this.querySelector(document, minionSelectors.PAGE.selector)) {
+      throw new ParseError('The page has no minion row and is not the mobile Lodestone layout');
+    }
+
     return {
       Minions: minions,
       Total: total
@@ -51,15 +66,10 @@ export class MinionParser {
   private parseMinionEntry(element: Element): MinionData | null {
     const minion: any = {};
 
-    // 解析 tooltip URL 來獲取名稱
-    if (minionSelectors.MINIONS.TOOLTIP) {
-      // 直接從 element 本身獲取 attribute
-      const tooltipUrl = this.getAttribute(element, minionSelectors.MINIONS.TOOLTIP.attribute || 'data-tooltip_href') || '';
-      if (tooltipUrl) {
-        // 從 URL 中提取最後一部分作為 ID
-        const parts = tooltipUrl.split('/');
-        minion.Name = `Minion-${parts[parts.length - 1]}`;
-      }
+    // The mobile page writes the name in the row itself (the desktop page only links to a tooltip)
+    const nameElement = this.querySelector(element, minionSelectors.MINIONS.NAME.selector);
+    if (nameElement) {
+      minion.Name = this.getTextContent(nameElement);
     }
 
     // 解析圖標
@@ -86,12 +96,12 @@ export class MinionParser {
   private querySelectorAll(node: Document | Element, selector: string): Element[] {
     const results: Element[] = [];
     const parts = this.parseSelector(selector);
-    
+
     if (parts.length === 0) return results;
-    
+
     const firstPart = parts[0];
     this.findDescendants(node, firstPart.selector, results);
-    
+
     return results;
   }
 
@@ -156,11 +166,11 @@ export class MinionParser {
   private matchesSelector(element: Element, selector: string): boolean {
     const pseudoMatch = selector.match(/^([^:]+)(:nth-child\((\d+)\)|:nth-of-type\((\d+)\))?$/);
     if (!pseudoMatch) return false;
-    
+
     const [, baseSelector, , nthChild, nthOfType] = pseudoMatch;
-    
+
     let matches = false;
-    
+
     if (baseSelector.startsWith('.')) {
       const className = baseSelector.substring(1);
       matches = element.attribs?.class?.split(' ').includes(className) || false;
@@ -184,7 +194,7 @@ export class MinionParser {
     } else {
       matches = element.name === baseSelector;
     }
-    
+
     if (matches && nthChild) {
       const index = parseInt(nthChild);
       const parent = element.parent;
@@ -197,14 +207,14 @@ export class MinionParser {
       const index = parseInt(nthOfType);
       const parent = element.parent;
       if (parent && 'children' in parent) {
-        const siblings = parent.children.filter(child => 
+        const siblings = parent.children.filter(child =>
           child.type === 'tag' && (child as Element).name === element.name
         );
         const elementIndex = siblings.indexOf(element) + 1;
         matches = elementIndex === index;
       }
     }
-    
+
     return matches;
   }
 
@@ -214,7 +224,7 @@ export class MinionParser {
 
   private getTextContent(element: Element): string {
     let text = '';
-    
+
     if (element.children) {
       for (const child of element.children) {
         if (child.type === 'text') {
@@ -224,7 +234,7 @@ export class MinionParser {
         }
       }
     }
-    
+
     return text.trim();
   }
 }

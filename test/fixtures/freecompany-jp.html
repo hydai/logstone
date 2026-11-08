@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<!--
+  Minimal stand-in for a Lodestone free company page (Japanese).
+  Real page: https://jp.finalfantasyxiv.com/lodestone/freecompany/<id>/
+
+  The two windows of the real page, with their children in the same nesting and order, since
+  the selectors in src/lib/lodestone-css-selectors/freecompany/ count positions (nth-child,
+  nth-of-type); only the share buttons at the end of the second window are left out, as no
+  selector reaches them. The real markup closes the company name with <p> instead of </p>, which makes
+  an empty <p> after it, and has a stray </span> after the tag: both are kept, because the
+  positions count that <p>. Headings, statuses and the grand company names are the site's own
+  words. Everything that identifies a company (name, tag, slogan, ID, crest, estate, member
+  count, ranks, dates) is made up, and the icons are placeholders.
+-->
+<html lang="ja">
+<body>
+<div class="ldst__main">
+  <div class="ldst__window">
+    <h2 class="heading--lg">カンパニープロフィール</h2>
+    <div class="entry">
+      <a href="/lodestone/freecompany/9230000000000000002/" class="entry__freecompany">
+        <div class="entry__freecompany__crest">
+          <div class="entry__freecompany__crest--position">
+            <img src="https://lds-img.finalfantasyxiv.com/h/0/00000000000000000000000000.png" width="68" height="68" alt="" class="entry__freecompany__crest__base">
+            <div class="entry__freecompany__crest__image">
+              <img src="https://img2.finalfantasyxiv.com/c/B00_00000000000000000000000000000000_00_64x64.png" width="64" height="64">
+              <img src="https://img2.finalfantasyxiv.com/c/F00_00000000000000000000000000000000_00_64x64.png" width="64" height="64">
+              <img src="https://img2.finalfantasyxiv.com/c/S00_00000000000000000000000000000000_00_64x64.png" width="64" height="64">
+            </div>
+          </div>
+        </div>
+        <div class="entry__freecompany__box">
+          <p class="entry__freecompany__gc">黒渦団 &lt;盟友&gt;</p>
+          <p class="entry__freecompany__name">サンプルカンパニー</p>
+          <p class="entry__freecompany__gc"><i class="xiv-lds xiv-lds-home-world js__tooltip" data-tooltip="ホームワールド"></i>Tonberry [Elemental]</p>
+        </div>
+      </a>
+    </div>
+
+    <h3 class="heading--lead">カンパニースローガン</h3>
+    <p class="freecompany__text freecompany__text__message">いっしょに冒険しましょう！</p>
+
+    <h3 class="heading--lead">フリーカンパニー名 <span class="freecompany__text__tag">«カンパニータグ»</span></h3>
+
+    <p class="freecompany__text__name">サンプルカンパニー<p>
+    <p class="freecompany__text freecompany__text__tag">«SMPL»</span></p>
+
+    <h3 class="heading--lead">結成日</h3>
+    <p class="freecompany__text">
+
+<span id="datetime-0000000a000">-</span>
+<script>
+document.getElementById('datetime-0000000a000').innerHTML = ldst_strftime(1600000000, 'YMD');
+</script>
+
+</p>
+
+    <h3 class="heading--lead">メンバー</h3>
+    <p class="freecompany__text">48名</p>
+    <h3 class="heading--lead">ランク</h3>
+    <p class="freecompany__text">8</p>
+    <h3 class="heading--lead">友好度</h3>
+    <div class="freecompany__reputation">
+      <div class="freecompany__reputation__icon">
+        <img src="https://lds-img.finalfantasyxiv.com/h/0/00000000000000000000000001.png" alt="" width="32" height="32">
+      </div>
+      <div class="freecompany__reputation__data">
+        <p class="freecompany__reputation__gcname">黒渦団</p>
+        <p class="freecompany__reputation__rank color_08">盟友</p>
+        <div class="character__bar">
+          <div style="width:100%;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="freecompany__reputation">
+      <div class="freecompany__reputation__icon">
+        <img src="https://lds-img.finalfantasyxiv.com/h/0/00000000000000000000000002.png" alt="" width="32" height="32">
+      </div>
+      <div class="freecompany__reputation__data">
+        <p class="freecompany__reputation__gcname">双蛇党</p>
+        <p class="freecompany__reputation__rank color_01">中立</p>
+        <div class="character__bar">
+          <div style="width:20%;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="freecompany__reputation last">
+      <div class="freecompany__reputation__icon">
+        <img src="https://lds-img.finalfantasyxiv.com/h/0/00000000000000000000000003.png" alt="" width="32" height="32">
+      </div>
+      <div class="freecompany__reputation__data">
+        <p class="freecompany__reputation__gcname">不滅隊</p>
+        <p class="freecompany__reputation__rank color_01">中立</p>
+        <div class="character__bar">
+          <div style="width:0%;"></div>
+        </div>
+      </div>
+    </div>
+    <h3 class="heading--lead">ランキングステータス</h3>
+    <table class="character__ranking__data parts__space--reset">
+      <tr>
+        <th>週間ランク:12位（前週）</th>
+      </tr>
+      <tr>
+        <th>月間ランク:34位（前月）</th>
+      </tr>
+    </table>
+    <p class="freecompany__ranking__notes">※ランキングの注意書き</p>
+
+    <h3 class="heading--lead">ハウジングプロフィール</h3>
+    <p class="freecompany__estate__name">サンプルハウス</p>
+    <p class="freecompany__estate__title">住所</p>
+    <p class="freecompany__estate__text">ミスト・ヴィレッジ 1区 30番地 (Mサイズ)</p>
+    <p class="freecompany__estate__title">あいさつ</p>
+    <p class="freecompany__estate__greeting">いらっしゃいませ。</p>
+  </div>
+
+  <div class="ldst__window">
+    <h2 class="heading--lg parts__space--add" id="anchor__focus">活動状況</h2>
+    <h3 class="heading--lead">活動日</h3>
+    <p class="freecompany__text">毎日</p>
+    <h3 class="heading--lead">加入申請の受付</h3>
+    <p class="freecompany__text freecompany__recruitment">申請可</p>
+    <h3 class="heading--lead">活動内容</h3>
+    <ul class="freecompany__focus_icon clearfix">
+      <li><div><img src="https://lds-img.finalfantasyxiv.com/h/0/00000000000000000000000011.png" alt="" width="32" height="32"></div><p>ロールプレイ</p></li>
+      <li><div><img src="https://lds-img.finalfantasyxiv.com/h/0/00000000000000000000000012.png" alt="" width="32" height="32"></div><p>レベリング</p></li>
+      <li><div><img src="https://lds-img.finalfantasyxiv.com/h/0/00000000000000000000000013.png" alt="" width="32" height="32"></div><p>カジュアル</p></li>
+      <li class="freecompany__focus_icon--off"><div><img src="https://lds-img.finalfantasyxiv.com/h/0/00000000000000000000000014.png" alt="" width="32" height="32"></div><p>ハードコア</p></li>
+      <li><div><img src="https://lds-img.finalfantasyxiv.com/h/0/00000000000000000000000015.png" alt="" width="32" height="32"></div><p>ダンジョン</p></li>
+      <li><div><img src="https://lds-img.finalfantasyxiv.com/h/0/00000000000000000000000016.png" alt="" width="32" height="32"></div><p>ギルドオーダー</p></li>
+      <li><div><img src="https://lds-img.finalfantasyxiv.com/h/0/00000000000000000000000017.png" alt="" width="32" height="32"></div><p>討伐・討滅戦</p></li>
+      <li><div><img src="https://lds-img.finalfantasyxiv.com/h/0/00000000000000000000000018.png" alt="" width="32" height="32"></div><p>レイド</p></li>
+      <li class="freecompany__focus_icon--off"><div><img src="https://lds-img.finalfantasyxiv.com/h/0/00000000000000000000000019.png" alt="" width="32" height="32"></div><p>PvP</p></li>
+    </ul>
+    <h3 class="heading--lead">募集ロール</h3>
+    <ul class="freecompany__focus_icon freecompany__focus_icon--role clearfix">
+      <li><div><img src="https://lds-img.finalfantasyxiv.com/h/0/00000000000000000000000021.png" alt="" width="32" height="32"></div><p>TANK</p></li>
+      <li><div><img src="https://lds-img.finalfantasyxiv.com/h/0/00000000000000000000000022.png" alt="" width="32" height="32"></div><p>HEALER</p></li>
+      <li><div><img src="https://lds-img.finalfantasyxiv.com/h/0/00000000000000000000000023.png" alt="" width="32" height="32"></div><p>DPS</p></li>
+      <li><div><img src="https://lds-img.finalfantasyxiv.com/h/0/00000000000000000000000024.png" alt="" width="32" height="32"></div><p>CRAFTER</p></li>
+      <li><div><img src="https://lds-img.finalfantasyxiv.com/h/0/00000000000000000000000025.png" alt="" width="32" height="32"></div><p>GATHERER</p></li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>
