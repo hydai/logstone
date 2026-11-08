@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<!--
+  Minimal stand-in for a Lodestone character page (English).
+  Real page: https://na.finalfantasyxiv.com/lodestone/character/<id>/
+
+  Only the elements reached by the selectors in
+  src/lib/lodestone-css-selectors/profile/{character,attributes,gearset}.json are kept,
+  in the same nesting and order as the real page (nth-child positions matter).
+  Everything that identifies a player (name, free company, ID, avatar, portrait, crest,
+  bio) is made up. The item tooltips that gearset.json expects are loaded lazily on the
+  real page, so those selectors match nothing there, and nothing here.
+-->
+<html lang="en">
+<body>
+<div id="character" class="ldst__window">
+  <div class="frame__chara js__toggle_wrapper">
+    <a href="/lodestone/character/12345678/" class="frame__chara__link state_btn">
+      <div class="frame__chara__face">
+        <img src="https://img2.finalfantasyxiv.com/f/00000000000000000000000000000000_00000000000000000000000000000000fc0.jpg?1700000000" width="40" height="40" alt="">
+      </div>
+      <div class="frame__chara__box">
+        <p class="frame__chara__title">Moonwalker</p>
+        <p class="frame__chara__name">Hikari Senshi</p>
+        <p class="frame__chara__world"><i class="xiv-lds xiv-lds-home-world js__tooltip" data-tooltip="Home World"></i>Tonberry [Elemental]</p>
+      </div>
+    </a>
+  </div>
+
+  <div class="character__content selected">
+    <div class="character__profile clearfix">
+      <div class="character__profile__data">
+        <div class="js__character_toggle">
+          <div class="character__profile__data__detail">
+            <div class="character-block">
+              <img src="https://img2.finalfantasyxiv.com/f/00000000000000000000000000000000_00000000000000000000000000000000fc0.jpg?1700000000" width="32" height="32" alt="" class="character-block__face">
+              <div class="character-block__box">
+                <p class="character-block__title">Race/Clan/Gender</p>
+                <p class="character-block__name">Lalafell<br>Plainsfolk / ♀</p>
+              </div>
+            </div>
+            <div class="character-block">
+              <img src="https://lds-img.finalfantasyxiv.com/h/T/T7o6XAzSyUsT2WA06L_XlK4SDQ.png" width="32" height="32" alt="">
+              <div class="character-block__box">
+                <p class="character-block__title">Nameday</p>
+                <p class="character-block__birth">17th Sun of the 2nd Umbral Moon</p>
+                <p class="character-block__title">Guardian</p>
+                <p class="character-block__name">Menphina, the Lover</p>
+              </div>
+            </div>
+            <div class="character-block">
+              <img src="https://lds-img.finalfantasyxiv.com/h/u/ZHuDKgNULSbEA_VTXdjeA9MlEs.png" width="32" height="32" alt="">
+              <div class="character-block__box">
+                <p class="character-block__title">City-state</p>
+                <p class="character-block__name">Gridania</p>
+              </div>
+            </div>
+            <div class="character-block">
+              <img src="https://lds-img.finalfantasyxiv.com/h/Z/7xyFk9EAcDABJVaW-i7UADLfOM.png" width="32" height="32" alt="">
+              <div class="character-block__box">
+                <p class="character-block__title">Grand Company</p>
+                <p class="character-block__name">Order of the Twin Adder / Second Serpent Lieutenant</p>
+              </div>
+            </div>
+            <div class="character-block">
+              <div class="character__freecompany__crest">
+                <div class="character__freecompany__crest__image">
+                  <img src="https://img2.finalfantasyxiv.com/c/B00_00000000000000000000000000000000_00_40x40.png" width="28" height="28">
+                  <img src="https://img2.finalfantasyxiv.com/c/F00_00000000000000000000000000000000_00_40x40.png" width="28" height="28">
+                  <img src="https://img2.finalfantasyxiv.com/c/S00_00000000000000000000000000000000_00_40x40.png" width="28" height="28">
+                </div>
+              </div>
+              <div class="character-block__box">
+                <div class="character__freecompany__name">
+                  <p>Free Company</p>
+                  <h4><a href="/lodestone/freecompany/9230000000000000001/">Example Company</a></h4>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="js__character_toggle hide">
+          <h3 class="heading--lead">Attributes</h3>
+          <table class="character__param__list">
+            <tr><th>Strength</th><td>400</td></tr>
+            <tr><th>Dexterity</th><td>5000</td></tr>
+            <tr><th>Vitality</th><td>6000</td></tr>
+            <tr><th>Intelligence</th><td>350</td></tr>
+            <tr><th>Mind</th><td>340</td></tr>
+          </table>
+          <h3 class="heading--lead">Offensive Properties</h3>
+          <table class="character__param__list">
+            <tr><th>Critical Hit Rate</th><td>3000</td></tr>
+            <tr><th>Determination</th><td>2000</td></tr>
+            <tr><th>Direct Hit Rate</th><td>1900</td></tr>
+          </table>
+          <h3 class="heading--lead">Defensive Properties</h3>
+          <table class="character__param__list">
+            <tr><th>Defense</th><td>4000</td></tr>
+            <tr><th>Magic Defense</th><td>4100</td></tr>
+          </table>
+          <h3 class="heading--lead">Physical Properties</h3>
+          <table class="character__param__list">
+            <tr><th>Attack Power</th><td>5000</td></tr>
+            <tr><th>Skill Speed</th><td>500</td></tr>
+          </table>
+          <h3 class="heading--lead">Mental Properties</h3>
+          <table class="character__param__list">
+            <tr><th>Attack Magic Potency</th><td>350</td></tr>
+            <tr><th>Healing Magic Potency</th><td>340</td></tr>
+            <tr><th>Spell Speed</th><td>400</td></tr>
+          </table>
+          <h3 class="heading--lead">Role</h3>
+          <table class="character__param__list">
+            <tr><th>Tenacity</th><td>420</td></tr>
+            <tr><th>Piety</th><td>440</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="character__profile__detail">
+        <div class="character__view clearfix">
+          <div class="character__class">
+            <div class="character__class__data">
+              <p>LEVEL 100 </p>
+              <div class="character__class_icon">
+                <img src="https://lds-img.finalfantasyxiv.com/h/F/KWI-9P3RX_Ojjn_mwCS2N0-3TI.png" width="24" height="24" alt="">
+              </div>
+            </div>
+          </div>
+          <div class="character__detail">
+            <div class="character__detail__image">
+              <a href="https://img2.finalfantasyxiv.com/f/00000000000000000000000000000000_00000000000000000000000000000000fl0.jpg?1700000000" class="js__image_popup">
+                <img src="https://img2.finalfantasyxiv.com/f/00000000000000000000000000000000_00000000000000000000000000000000fl0.jpg?1700000000" width="220" height="300" alt="">
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="js__character_toggle hide">
+          <div class="character__param">
+            <ul>
+              <li><div><p class="character__param__text character__param__text__hp--en-us">HP</p><span>150000</span></div></li>
+              <li><div><p class="character__param__text character__param__text__mp--en-us">MP</p><span>10000</span></div></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="character__selfintroduction">第一行<br>第二行</div>
+  </div>
+</div>
+</body>
+</html>
