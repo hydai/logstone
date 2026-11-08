@@ -40,7 +40,7 @@
     },
     "GRAND_COMPANY": {
         "selector": "div.ldst__window:nth-child(1) > div:nth-child(2) > a:nth-child(1) > div:nth-child(2) > p:nth-child(1)",
-        "regex": "(?P<Name>\\w.*)<(?P<Rank>\\w*)>"
+        "regex": "(?P<Name>\\S.*?)\\s*<(?P<Rank>[^>]+)>"
     },
     "ID": {
         "selector": "div.ldst__window:nth-child(1) > div:nth-child(2) > a:nth-child(1)",
@@ -56,11 +56,11 @@
     "RANKING": {
         "WEEKLY": {
             "selector": ".character__ranking__data tr:nth-child(1) > th:nth-child(1)",
-            "regex": "Weekly Rank:(?P<Rank>.+) \\(previous week\\)"
+            "regex": "(?:Weekly Rank|週間ランク):(?P<Rank>.+?)位?\\s*[(（](?:previous week|前週)[)）]"
         },
         "MONTHLY": {
             "selector": ".character__ranking__data tr:nth-child(2) > th:nth-child(1)",
-            "regex": "Monthly Rank:(?P<Rank>.*) \\(previous month\\)"
+            "regex": "(?:Monthly Rank|月間ランク):(?P<Rank>.+?)位?\\s*[(（](?:previous month|前月)[)）]"
         }
     },
     "RECRUITMENT": {

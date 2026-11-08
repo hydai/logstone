@@ -395,7 +395,8 @@ curl https://your-worker.workers.dev/freecompany/123456789?dc=jp
 
 只列出要注意的欄位：
 
-- `GrandCompany`: 部隊所屬的大國防聯軍；`Rank` 是部隊和它的友好度（例如 `Allied`），不是軍階
+- `GrandCompany`: 部隊所屬的大國防聯軍；`Rank` 是部隊和它的友好度（例如 `Allied`），不是軍階。語言跟著 `dc`（日文版是 `黒渦団`、`盟友` 這樣的寫法）
+- `Ranking`: 上週（`Weekly`）和上個月（`Monthly`）的排名（字串）；日文版寫在名次後面的「位」不算在內，所以英文版和日文版讀到的一樣
 - `Reputation`: 部隊和三個大國防聯軍的友好度，鍵是 `ADDERS`（雙蛇黨）、`FLAMES`（不滅隊）、`MAELSTROM`（黑渦團）
   - `NAME`: 大國防聯軍的名稱，語言跟著 `dc`
   - `RANK`: 友好度，例如 `Neutral`、`Allied`
@@ -735,6 +736,7 @@ open test.html
 以上游的檔案為底，只改必要的地方：
 - `profile/classjob.json` 和 `search/character.json` 取自上游的 commit `245db29`；`search/character.json` 另外加上 `ENTRY.FREE_COMPANY`（部隊的 ID 和名稱）與 `TOTAL`（符合的總數）
 - `profile/mount.json`、`profile/minion.json` 改成讀官網的手機版頁面
+- `freecompany/freecompany.json` 的 `GRAND_COMPANY` 和 `RANKING` 也讀得懂日文版的頁面，大國防聯軍的名稱也不會帶著後面的空白
 
 ## 授權
 

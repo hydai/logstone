@@ -155,6 +155,7 @@ The `wrangler.toml` file contains:
   - `profile/classjob.json` is upstream's file at commit 245db29, byte for byte
   - `profile/mount.json` and `profile/minion.json` are written for the mobile pages
   - `search/character.json` is upstream's file at commit 245db29 plus `ENTRY.FREE_COMPANY` (the company's ID and name) and `TOTAL`
+  - `freecompany/freecompany.json`: the `GRAND_COMPANY` and `RANKING` regexes also read the Japanese page, and the grand company name comes without the space before its standing
 - **Lodestone site**: `dc` picks which language site of Lodestone is read, `na` (English) or `jp` (Japanese); both show the same characters and Free Companies, whatever their data center
 - **Read-only**: No write operations to Lodestone
 - **CORS**: Must maintain security restrictions
