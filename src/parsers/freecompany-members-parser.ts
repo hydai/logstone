@@ -34,7 +34,7 @@ export class FreeCompanyMembersParser {
     // 解析成員列表
     if (membersSelectors.ENTRY?.ROOT) {
       const elements = this.querySelectorAll(document, membersSelectors.ENTRY.ROOT.selector);
-      
+
       for (const element of elements) {
         const member = this.parseMemberEntry(element);
         if (member) {
@@ -188,12 +188,12 @@ export class FreeCompanyMembersParser {
   private querySelectorAll(node: Document | Element, selector: string): Element[] {
     const results: Element[] = [];
     const parts = this.parseSelector(selector);
-    
+
     if (parts.length === 0) return results;
-    
+
     const firstPart = parts[0];
     this.findDescendants(node, firstPart.selector, results);
-    
+
     return results;
   }
 
@@ -258,11 +258,11 @@ export class FreeCompanyMembersParser {
   private matchesSelector(element: Element, selector: string): boolean {
     const pseudoMatch = selector.match(/^([^:]+)(:nth-child\((\d+)\)|:nth-of-type\((\d+)\))?$/);
     if (!pseudoMatch) return false;
-    
+
     const [, baseSelector, , nthChild, nthOfType] = pseudoMatch;
-    
+
     let matches = false;
-    
+
     if (baseSelector.startsWith('.')) {
       const className = baseSelector.substring(1);
       matches = element.attribs?.class?.split(' ').includes(className) || false;
@@ -286,7 +286,7 @@ export class FreeCompanyMembersParser {
     } else {
       matches = element.name === baseSelector;
     }
-    
+
     if (matches && nthChild) {
       const index = parseInt(nthChild);
       const parent = element.parent;
@@ -299,14 +299,14 @@ export class FreeCompanyMembersParser {
       const index = parseInt(nthOfType);
       const parent = element.parent;
       if (parent && 'children' in parent) {
-        const siblings = parent.children.filter(child => 
+        const siblings = parent.children.filter(child =>
           child.type === 'tag' && (child as Element).name === element.name
         );
         const elementIndex = siblings.indexOf(element) + 1;
         matches = elementIndex === index;
       }
     }
-    
+
     return matches;
   }
 
@@ -316,7 +316,7 @@ export class FreeCompanyMembersParser {
 
   private getTextContent(element: Element): string {
     let text = '';
-    
+
     if (element.children) {
       for (const child of element.children) {
         if (child.type === 'text') {
@@ -326,7 +326,7 @@ export class FreeCompanyMembersParser {
         }
       }
     }
-    
+
     return text.trim();
   }
 
@@ -334,7 +334,7 @@ export class FreeCompanyMembersParser {
     try {
       const namedGroupRegex = regex.replace(/\?P<(\w+)>/g, '?<$1>');
       const match = new RegExp(namedGroupRegex).exec(value);
-      
+
       if (match) {
         if (match.groups && Object.keys(match.groups).length > 0) {
           return match.groups;
