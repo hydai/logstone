@@ -281,9 +281,9 @@ export class ClassJobParser {
 
     const tankJobs = ['PALADIN', 'WARRIOR', 'DARKKNIGHT', 'GUNBREAKER'];
     const healerJobs = ['WHITEMAGE', 'SCHOLAR', 'ASTROLOGIAN', 'SAGE'];
-    const meleeDPSJobs = ['MONK', 'DRAGOON', 'NINJA', 'SAMURAI', 'REAPER'];
+    const meleeDPSJobs = ['MONK', 'DRAGOON', 'NINJA', 'SAMURAI', 'REAPER', 'VIPER', 'BEASTMASTER'];
     const rangedDPSJobs = ['BARD', 'MACHINIST', 'DANCER'];
-    const magicalDPSJobs = ['BLACKMAGE', 'SUMMONER', 'REDMAGE', 'BLUEMAGE'];
+    const magicalDPSJobs = ['BLACKMAGE', 'SUMMONER', 'REDMAGE', 'PICTOMANCER', 'BLUEMAGE'];
     const craftingJobs = ['CARPENTER', 'BLACKSMITH', 'ARMORER', 'GOLDSMITH', 'LEATHERWORKER', 'WEAVER', 'ALCHEMIST', 'CULINARIAN'];
     const gatheringJobs = ['MINER', 'BOTANIST', 'FISHER'];
     const specialContent = ['EUREKA', 'BOZJA'];
@@ -328,12 +328,15 @@ export class ClassJobParser {
       'NINJA': 'Ninja',
       'SAMURAI': 'Samurai',
       'REAPER': 'Reaper',
+      'VIPER': 'Viper',
+      'BEASTMASTER': 'Beastmaster',
       'BARD': 'Bard',
       'MACHINIST': 'Machinist',
       'DANCER': 'Dancer',
       'BLACKMAGE': 'BlackMage',
       'SUMMONER': 'Summoner',
       'REDMAGE': 'RedMage',
+      'PICTOMANCER': 'Pictomancer',
       'BLUEMAGE': 'BlueMage',
       'CARPENTER': 'Carpenter',
       'BLACKSMITH': 'Blacksmith',

@@ -5,6 +5,7 @@ import { CharacterParser } from '../src/parsers/character-parser';
 import { createEnv, stubFetch, workerRequest } from './helpers/env';
 
 const profileNa = readFileSync(new URL('./fixtures/profile-na.html', import.meta.url), 'utf8');
+const classjobNa = readFileSync(new URL('./fixtures/classjob-na.html', import.meta.url), 'utf8');
 
 const HOUR = 60 * 60 * 1000;
 
@@ -408,5 +409,67 @@ describe('cache keys and lifetimes', () => {
     await worker.fetch(workerRequest('/character/1'), env);
 
     expect(put).toHaveBeenCalledWith('v2:character:na:1', expect.any(String), { expirationTtl: 60 });
+  });
+});
+
+// The class job and achievement pages were read from the English site whatever `dc` said.
+// Each is asked of the Lodestone site of its own data center and saved under the key of that data center.
+const NO_ACHIEVEMENTS = '<html><body></body></html>';
+const DC_PAGES = [
+  {
+    path: '/character/1/classjob',
+    page: 'https://na.finalfantasyxiv.com/lodestone/character/1/class_job',
+    key: 'v2:classjob:na:1',
+    body: classjobNa,
+  },
+  {
+    path: '/character/1/classjob?dc=jp',
+    page: 'https://jp.finalfantasyxiv.com/lodestone/character/1/class_job',
+    key: 'v2:classjob:jp:1',
+    body: classjobNa,
+  },
+  {
+    path: '/character/1/achievements',
+    page: 'https://na.finalfantasyxiv.com/lodestone/character/1/achievement?page=1',
+    key: 'v2:achievements:na:1:page1',
+    body: NO_ACHIEVEMENTS,
+  },
+  {
+    path: '/character/1/achievements?dc=jp&page=2',
+    page: 'https://jp.finalfantasyxiv.com/lodestone/character/1/achievement?page=2',
+    key: 'v2:achievements:jp:1:page2',
+    body: NO_ACHIEVEMENTS,
+  },
+];
+
+describe('the Lodestone site of the data center', () => {
+  for (const { path, page, key, body } of DC_PAGES) {
+    test(`${path} reads ${page} and saves what it found under ${key}`, async () => {
+      const { env, kv } = createEnv();
+      const calls = stubFetch(() => htmlPage(body));
+
+      const response = await worker.fetch(workerRequest(path), env);
+
+      expect(response.status).toBe(200);
+      expect(calls.map((call) => call.url)).toEqual([page]);
+      expect([...kv.keys()]).toEqual([key]);
+    });
+  }
+
+  test('the class job answer keeps its ClassJobs wrapper and holds the 7.0 jobs and Blue Mage', async () => {
+    const { env } = createEnv();
+    stubFetch(() => htmlPage(classjobNa));
+
+    const response = await worker.fetch(workerRequest('/character/1/classjob?dc=jp'), env);
+    const body = (await response.json()) as {
+      CharacterID: number;
+      ClassJobs: { CombatJobs: Record<'MeleeDPS' | 'MagicalDPS', Record<string, { Level: string }>> };
+    };
+
+    expect(body.CharacterID).toBe(1);
+    expect(body.ClassJobs.CombatJobs.MeleeDPS.Viper.Level).toBe('80');
+    expect(body.ClassJobs.CombatJobs.MeleeDPS.Beastmaster.Level).toBe('50');
+    expect(body.ClassJobs.CombatJobs.MagicalDPS.Pictomancer.Level).toBe('91');
+    expect(body.ClassJobs.CombatJobs.MagicalDPS.BlueMage.Level).toBe('50');
   });
 });

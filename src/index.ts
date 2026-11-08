@@ -82,14 +82,14 @@ async function handleClassJobRequest(characterId: string, request: Request, env:
   try {
     const dc = parseDc(new URL(request.url));
     return await respondWithCache(request, env, cacheKey('classjob', dc, characterId), TTL_DEFAULT, () =>
-      fetchClassJobData(characterId)
+      fetchClassJobData(characterId, dc)
     );
   } catch (error) {
     return errorResponse(error, request);
   }
 }
 
-async function fetchCharacterData(characterId: string, dc: string = 'na'): Promise<any> {
+async function fetchCharacterData(characterId: string, dc: 'na' | 'jp'): Promise<any> {
   const url = `https://${dc}.finalfantasyxiv.com/lodestone/character/${characterId}`;
 
   const html = await fetchUpstreamText(url);
@@ -260,7 +260,7 @@ function errorResponse(error: unknown, request: Request): Response {
   return createResponse(JSON.stringify({ error: code }), request, null, status);
 }
 
-async function fetchClassJobData(characterId: string, dc: string = 'na'): Promise<any> {
+async function fetchClassJobData(characterId: string, dc: 'na' | 'jp'): Promise<any> {
   const url = `https://${dc}.finalfantasyxiv.com/lodestone/character/${characterId}/class_job`;
 
   const html = await fetchUpstreamText(url);
@@ -281,14 +281,14 @@ async function handleAchievementsRequest(characterId: string, request: Request, 
     const dc = parseDc(url);
     const page = parsePage(url);
     return await respondWithCache(request, env, cacheKey('achievements', dc, characterId, `page${page}`), TTL_COLLECTION, () =>
-      fetchAchievementsData(characterId, page)
+      fetchAchievementsData(characterId, page, dc)
     );
   } catch (error) {
     return errorResponse(error, request);
   }
 }
 
-async function fetchAchievementsData(characterId: string, page: number = 1, dc: string = 'na'): Promise<any> {
+async function fetchAchievementsData(characterId: string, page: number = 1, dc: 'na' | 'jp'): Promise<any> {
   const url = `https://${dc}.finalfantasyxiv.com/lodestone/character/${characterId}/achievement?page=${page}`;
 
   const html = await fetchUpstreamText(url);
@@ -314,7 +314,7 @@ async function handleFreeCompanyRequest(freecompanyId: string, request: Request,
   }
 }
 
-async function fetchFreeCompanyData(freecompanyId: string, dc: string = 'na'): Promise<any> {
+async function fetchFreeCompanyData(freecompanyId: string, dc: 'na' | 'jp'): Promise<any> {
   const url = `https://${dc}.finalfantasyxiv.com/lodestone/freecompany/${freecompanyId}`;
 
   const html = await fetchUpstreamText(url);
@@ -341,7 +341,7 @@ async function handleFreeCompanyMembersRequest(freecompanyId: string, request: R
   }
 }
 
-async function fetchFreeCompanyMembersData(freecompanyId: string, page: number = 1, dc: string = 'na'): Promise<any> {
+async function fetchFreeCompanyMembersData(freecompanyId: string, page: number = 1, dc: 'na' | 'jp'): Promise<any> {
   const url = `https://${dc}.finalfantasyxiv.com/lodestone/freecompany/${freecompanyId}/member?page=${page}`;
 
   const html = await fetchUpstreamText(url);
@@ -367,7 +367,7 @@ async function handleMinionsRequest(characterId: string, request: Request, env: 
   }
 }
 
-async function fetchMinionsData(characterId: string, dc: string = 'na'): Promise<any> {
+async function fetchMinionsData(characterId: string, dc: 'na' | 'jp'): Promise<any> {
   const url = `https://${dc}.finalfantasyxiv.com/lodestone/character/${characterId}/minion`;
 
   const html = await fetchUpstreamText(url);
@@ -393,7 +393,7 @@ async function handleMountsRequest(characterId: string, request: Request, env: E
   }
 }
 
-async function fetchMountsData(characterId: string, dc: string = 'na'): Promise<any> {
+async function fetchMountsData(characterId: string, dc: 'na' | 'jp'): Promise<any> {
   const url = `https://${dc}.finalfantasyxiv.com/lodestone/character/${characterId}/mount`;
 
   const html = await fetchUpstreamText(url);
