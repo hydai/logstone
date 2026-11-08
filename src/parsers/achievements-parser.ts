@@ -36,16 +36,16 @@ export class AchievementsParser {
 
   parse(html: string, currentPage: number = 1): AchievementsData {
     const document = parseDocument(html);
-    
+
     // 提取成就列表
     const achievements = this.extractAchievements(document);
-    
+
     // 提取總成就數
     const totalAchievements = this.extractTotalAchievements(document);
-    
+
     // 提取成就點數
     const achievementPoints = this.extractAchievementPoints(document);
-    
+
     // 提取分頁資訊
     const pagination = this.extractPagination(document, currentPage);
 
@@ -59,17 +59,17 @@ export class AchievementsParser {
 
   private extractAchievements(document: Document): Achievement[] {
     const achievements: Achievement[] = [];
-    
+
     // 取得所有成就項目
     const entryElements = this.querySelectorAll(document, this.selectors.ENTRY.ROOT.selector);
-    
+
     for (const element of entryElements) {
       const achievement = this.extractAchievementFromElement(element);
       if (achievement) {
         achievements.push(achievement);
       }
     }
-    
+
     return achievements;
   }
 
@@ -100,7 +100,7 @@ export class AchievementsParser {
     } catch (error) {
       console.error('Error extracting achievement:', error);
     }
-    
+
     return null;
   }
 
@@ -125,11 +125,11 @@ export class AchievementsParser {
 
     const pageText = this.getTextContent(pageInfoElement);
     const pageMatch = this.applyRegex(pageText, this.selectors.PAGE_INFO.regex);
-    
+
     if (pageMatch?.CurrentPage && pageMatch?.NumPages) {
       const page = parseInt(pageMatch.CurrentPage);
       const pageTotal = parseInt(pageMatch.NumPages);
-      
+
       return {
         Page: page,
         PageTotal: pageTotal,
@@ -137,7 +137,7 @@ export class AchievementsParser {
         PagePrev: page > 1 ? page - 1 : null
       };
     }
-    
+
     return undefined;
   }
 
@@ -149,12 +149,12 @@ export class AchievementsParser {
   private querySelectorAll(node: Document | Element, selector: string): Element[] {
     const results: Element[] = [];
     const parts = this.parseSelector(selector);
-    
+
     if (parts.length === 0) return results;
-    
+
     const firstPart = parts[0];
     this.findDescendants(node, firstPart.selector, results);
-    
+
     return results;
   }
 
@@ -219,11 +219,11 @@ export class AchievementsParser {
   private matchesSelector(element: Element, selector: string): boolean {
     const pseudoMatch = selector.match(/^([^:]+)(:nth-child\((\d+)\))?$/);
     if (!pseudoMatch) return false;
-    
+
     const [, baseSelector, , nthChild] = pseudoMatch;
-    
+
     let matches = false;
-    
+
     if (baseSelector.startsWith('.')) {
       const className = baseSelector.substring(1);
       matches = element.attribs?.class?.split(' ').includes(className) || false;
@@ -247,7 +247,7 @@ export class AchievementsParser {
     } else {
       matches = element.name === baseSelector;
     }
-    
+
     if (matches && nthChild) {
       const index = parseInt(nthChild);
       const parent = element.parent;
@@ -257,7 +257,7 @@ export class AchievementsParser {
         matches = elementIndex === index;
       }
     }
-    
+
     return matches;
   }
 
@@ -267,7 +267,7 @@ export class AchievementsParser {
 
   private getTextContent(element: Element): string {
     let text = '';
-    
+
     if (element.children) {
       for (const child of element.children) {
         if (child.type === 'text') {
@@ -277,7 +277,7 @@ export class AchievementsParser {
         }
       }
     }
-    
+
     return text.trim();
   }
 
@@ -285,7 +285,7 @@ export class AchievementsParser {
     try {
       const namedGroupRegex = regex.replace(/\?P<(\w+)>/g, '?<$1>');
       const match = new RegExp(namedGroupRegex).exec(value);
-      
+
       if (match) {
         if (match.groups && Object.keys(match.groups).length > 0) {
           return match.groups;
