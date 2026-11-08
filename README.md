@@ -99,7 +99,19 @@ curl https://your-worker.workers.dev/character/123456?dc=jp
       "Level": 100,
       "Icon": "https://lds-img.finalfantasyxiv.com/h/F/KWI-9P3RX_Ojjn_mwCS2N0-3TI.png"
     },
-    "Bio": "第一行\n第二行"
+    "Bio": "第一行\n第二行",
+    "Gear": [
+      {
+        "Slot": "MainHand",
+        "Icon": "https://lds-img.finalfantasyxiv.com/itemicon/10/1000000000000000000000000000000000000000.png?n7.57",
+        "Dyes": ["#a1b2c3"]
+      },
+      {
+        "Slot": "Head",
+        "Icon": "https://lds-img.finalfantasyxiv.com/itemicon/20/2000000000000000000000000000000000000000.png?n7.57",
+        "Dyes": []
+      }
+    ]
     // ... 其他角色資料
   },
   "FetchedAt": "2026-11-08T02:30:00.000Z"
@@ -124,6 +136,10 @@ curl https://your-worker.workers.dev/character/123456?dc=jp
   - `Level`: 目前等級（數字），讀不到時是 `null`
   - `Icon`: 官網的職業圖示網址，沒有時是 `null`
 - `Bio`: 個人簡介，官網的換行保留成 `\n`
+- `Gear`: 每一格裝備的圖示與染色（陣列）。官網的角色頁沒有裝備名稱和物品等級（要滑過去才從另一個網址載入），所以回應裡也沒有。沒有圖示的格子不列，什麼都沒穿是空陣列
+  - `Slot`: 格子，陣列照這個順序排（不是官網頁面上的順序）：`MainHand`（主手）、`OffHand`（副手）、`Head`（頭部）、`Body`（身體）、`Hands`（手部）、`Legs`（腿部）、`Feet`（腳部）、`Earrings`（耳飾）、`Necklace`（頸飾）、`Bracelets`（腕飾）、`Ring1`、`Ring2`（戒指）、`SoulCrystal`（靈魂水晶）、`Facewear`（臉部）
+  - `Icon`: 物品圖示的網址
+  - `Dyes`: 染色的顏色（`#rrggbb`），照第一道、第二道的順序，只放有染的；沒染或不能染的不列，所以是 0 到 2 個
 - `ActiveClassjob`、`ActiveClassjobLevel`: 舊的欄位（圖示網址和 `{ "Level": "100" }`），照舊保留
 
 ### 2. 職業等級資料
@@ -727,7 +743,7 @@ open test.html
 - [ ] 跨界聯絡貝（CWLS）支援
 - [ ] 聯絡貝（Linkshell）支援
 - [ ] PvP 小隊詳細資訊
-- [ ] 角色裝備資訊
+- [ ] 裝備名稱與物品等級
 
 ## CSS Selectors 來源
 
@@ -737,6 +753,7 @@ open test.html
 - `profile/classjob.json` 和 `search/character.json` 取自上游的 commit `245db29`；`search/character.json` 另外加上 `ENTRY.FREE_COMPANY`（部隊的 ID 和名稱）與 `TOTAL`（符合的總數）
 - `profile/mount.json`、`profile/minion.json` 改成讀官網的手機版頁面
 - `freecompany/freecompany.json` 的 `GRAND_COMPANY` 和 `RANKING` 也讀得懂日文版的頁面，大國防聯軍的名稱也不會帶著後面的空白
+- `profile/gearset.json` 拿掉了：它讀的是以前直接寫在頁面上的裝備提示框，官網現在改成滑過去才另外載入，一個欄位都對不到。裝備的圖示與染色改由 `character-parser.ts` 直接讀每一格
 
 ## 授權
 

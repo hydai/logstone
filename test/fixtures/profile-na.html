@@ -4,11 +4,17 @@
   Real page: https://na.finalfantasyxiv.com/lodestone/character/<id>/
 
   Only the elements reached by the selectors in
-  src/lib/lodestone-css-selectors/profile/{character,attributes,gearset}.json are kept,
-  in the same nesting and order as the real page (nth-child positions matter).
+  src/lib/lodestone-css-selectors/profile/{character,attributes}.json and by the gear
+  reader in src/parsers/character-parser.ts are kept, in the same nesting and order as
+  the real page (nth-child positions matter).
   Everything that identifies a player (name, free company, ID, avatar, portrait, crest,
-  bio) is made up. The item tooltips that gearset.json expects are loaded lazily on the
-  real page, so those selectors match nothing there, and nothing here.
+  bio, item icons) is made up.
+  Gear: like the real page, each slot is a box with an icon and its dyes and nothing
+  else, because the name and the item level load later from the tooltip at
+  data-lazy_load_url. The boxes are in the order of the real page, which is not the
+  order of the answer (the glasses come before the soul crystal). The slot without an
+  item is an empty box. No captured page wears glasses, so the markup of the glasses
+  is the one of the other slots, as an assumption.
 -->
 <html lang="en">
 <body>
@@ -121,6 +127,14 @@
       <div class="character__profile__detail">
         <div class="character__view clearfix">
           <div class="character__class">
+            <div class="character__class__arms">
+              <div class="icon-c--0 ic_reflection_box js__db_tooltip" data-lazy_load_url="/lodestone/character/12345678/equipment/tooltip/0">
+                <img src="https://lds-img.finalfantasyxiv.com/itemicon/10/1000000000000000000000000000000000000000.png?n7.57" width="40" height="40" alt="" class="character__item_icon__img">
+                <div class="character__item_icon character__item_icon--frame"></div>
+                <div class="mirage_staining painted_cover" style="background-color: #a1b2c3;"></div>
+                <div class="stain2-mirage"><div class="mirage_staining no_paint"></div></div>
+              </div>
+            </div>
             <div class="character__class__data">
               <p>LEVEL 100 </p>
               <div class="character__class_icon">
@@ -129,10 +143,36 @@
             </div>
           </div>
           <div class="character__detail">
+            <div class="character__detail__icon">
+              <div class="icon-c--2 ic_reflection_box js__db_tooltip" data-lazy_load_url="/lodestone/character/12345678/equipment/tooltip/2">
+                <img src="https://lds-img.finalfantasyxiv.com/itemicon/20/2000000000000000000000000000000000000000.png?n7.57" width="40" height="40" alt="" class="character__item_icon__img">
+                <div class="character__item_icon character__item_icon--frame"></div>
+                <div class="mirage_staining no_paint"></div>
+                <div class="stain2-mirage"><div class="mirage_staining no_paint"></div></div>
+              </div>
+              <div class="icon-c--3 ic_reflection_box js__db_tooltip" data-lazy_load_url="/lodestone/character/12345678/equipment/tooltip/3">
+                <img src="https://lds-img.finalfantasyxiv.com/itemicon/30/3000000000000000000000000000000000000000.png?n7.57" width="40" height="40" alt="" class="character__item_icon__img">
+                <div class="character__item_icon character__item_icon--frame"></div>
+                <div class="mirage_staining painted_cover" style="background-color: #112233;"></div>
+                <div class="stain2-mirage"><div class="mirage_staining painted_cover" style="background-color: #445566;"></div></div>
+              </div>
+              <div class="icon-c--glasses ic_reflection_box js__db_tooltip" data-lazy_load_url="/lodestone/character/12345678/equipment/tooltip/glasses">
+                <img src="https://lds-img.finalfantasyxiv.com/itemicon/f0/f000000000000000000000000000000000000000.png?n7.57" width="40" height="40" alt="" class="character__item_icon__img">
+                <div class="character__item_icon character__item_icon--frame"></div>
+                <div class="mirage_staining unpaitable"></div>
+              </div>
+            </div>
             <div class="character__detail__image">
               <a href="https://img2.finalfantasyxiv.com/f/00000000000000000000000000000000_00000000000000000000000000000000fl0.jpg?1700000000" class="js__image_popup">
                 <img src="https://img2.finalfantasyxiv.com/f/00000000000000000000000000000000_00000000000000000000000000000000fl0.jpg?1700000000" width="220" height="300" alt="">
               </a>
+            </div>
+            <div class="character__detail__icon">
+              <div class="icon-c--1 ic_reflection_box js__db_tooltip"></div>
+              <div class="icon-c--13 ic_reflection_box js__db_tooltip" data-lazy_load_url="/lodestone/character/12345678/equipment/tooltip/13">
+                <img src="https://lds-img.finalfantasyxiv.com/itemicon/d0/d000000000000000000000000000000000000000.png?n7.57" width="40" height="40" alt="" class="character__item_icon__img">
+                <div class="character__item_icon character__item_icon--frame"></div>
+              </div>
             </div>
           </div>
         </div>

@@ -40,7 +40,8 @@ afterEach(() => {
   expect(strayRequests).toEqual([]);
 });
 
-type CharacterBody = { Character: { ID: number; Name: string }; FetchedAt: string };
+type GearItem = { Slot: string; Icon: string; Dyes: string[] };
+type CharacterBody = { Character: { ID: number; Name: string; Gear: GearItem[] }; FetchedAt: string };
 
 describe('requests the Worker refuses', () => {
   test('a request with neither Origin nor Referer is Forbidden', async () => {
@@ -324,6 +325,27 @@ describe('FetchedAt and the cache on /character/:id', () => {
     expect(second.headers.get('X-Cache-Status')).toBe('HIT');
     expect(secondBody.FetchedAt).toBe('2026-11-08T02:30:00.000Z');
     expect(secondBody).toEqual(firstBody);
+  });
+
+  test('the answer carries Character.Gear, from a miss and from a hit', async () => {
+    const { env } = createEnv();
+    stubFetch(() => htmlPage(profileNa));
+
+    const first = await worker.fetch(workerRequest('/character/1'), env);
+    const second = await worker.fetch(workerRequest('/character/1'), env);
+
+    // The slots profile-na.html shows, in the order of the answer (the parser's tests check every icon and dye)
+    const gear = [
+      { Slot: 'MainHand', Icon: expect.stringMatching(/^https:\/\/lds-img\.finalfantasyxiv\.com\/itemicon\//), Dyes: ['#a1b2c3'] },
+      { Slot: 'Head', Icon: expect.any(String), Dyes: [] },
+      { Slot: 'Body', Icon: expect.any(String), Dyes: ['#112233', '#445566'] },
+      { Slot: 'SoulCrystal', Icon: expect.any(String), Dyes: [] },
+      { Slot: 'Facewear', Icon: expect.any(String), Dyes: [] },
+    ];
+    expect(first.headers.get('X-Cache-Status')).toBe('MISS');
+    expect(((await first.json()) as CharacterBody).Character.Gear).toEqual(gear);
+    expect(second.headers.get('X-Cache-Status')).toBe('HIT');
+    expect(((await second.json()) as CharacterBody).Character.Gear).toEqual(gear);
   });
 
   test('an entry saved before v2 under the old key is not served', async () => {

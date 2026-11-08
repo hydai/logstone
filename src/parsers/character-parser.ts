@@ -4,7 +4,6 @@ import { ParseError } from '../lib/http';
 import { activeJobKey } from '../lib/job-icons';
 import * as characterSelectors from '../lib/lodestone-css-selectors/profile/character.json';
 import * as attributesSelectors from '../lib/lodestone-css-selectors/profile/attributes.json';
-import * as gearsetSelectors from '../lib/lodestone-css-selectors/profile/gearset.json';
 
 interface SelectorDefinition {
   selector: string;
@@ -13,14 +12,44 @@ interface SelectorDefinition {
   multiple?: boolean;
 }
 
+// The slots of the gear tab in the order the answer lists them, each with the id of its box on the page
+// (div.icon-c--<id>.ic_reflection_box). The page numbers the boxes from 0 and has no 5 (the belt is gone
+// from the game), and calls the glasses "glasses". Any other box, like the icons next to the headings
+// (i.icon-c--title), is not a slot.
+const GEAR_SLOTS = [
+  ['MainHand', '0'],
+  ['OffHand', '1'],
+  ['Head', '2'],
+  ['Body', '3'],
+  ['Hands', '4'],
+  ['Legs', '6'],
+  ['Feet', '7'],
+  ['Earrings', '8'],
+  ['Necklace', '9'],
+  ['Bracelets', '10'],
+  ['Ring1', '11'],
+  ['Ring2', '12'],
+  ['SoulCrystal', '13'],
+  ['Facewear', 'glasses']
+] as const;
+
+type GearSlot = (typeof GEAR_SLOTS)[number][0];
+
+// What the page shows of a slot: the icon of the item and the colour of each dye coat that has paint. The
+// name and the item level load later from a tooltip, so the page does not have them.
+interface GearItem {
+  Slot: GearSlot;
+  Icon: string;
+  Dyes: string[];
+}
+
 export class CharacterParser {
   private selectors: Record<string, any>;
 
   constructor() {
     this.selectors = {
       ...characterSelectors,
-      ...attributesSelectors,
-      ...gearsetSelectors
+      ...attributesSelectors
     };
   }
 
@@ -28,8 +57,9 @@ export class CharacterParser {
     const document = parseDocument(html);
     let result: any = {};
 
-    // Skip problematic selectors that are too broad
-    const skipFields = ['CLASSJOB_ICONS'];
+    // Skip problematic selectors that are too broad, and "default": a bundled JSON file also exports itself
+    // under that name, which read as a field would answer the last selector file's fields a second time
+    const skipFields = ['CLASSJOB_ICONS', 'default'];
 
     // 解析所有可用的欄位
     for (const field in this.selectors) {
@@ -92,6 +122,10 @@ export class CharacterParser {
       result.Bio = this.getTextWithLineBreaks(bio).trim();
     }
 
+    // Gear: the icon and the dyes of each slot. The page has no item names (they load from a tooltip),
+    // so there are none to read.
+    result.Gear = this.extractGear(document);
+
     // 處理 PvP Team
     if (result.PvpTeam?.Name?.ID) {
       // 根據現有的選擇器，我們只能取得 ID
@@ -110,6 +144,53 @@ export class CharacterParser {
     // 處理 Town - 保持原有結構
 
     return result;
+  }
+
+  // Every slot that shows an icon, in the order of GEAR_SLOTS whatever the order of the page. A slot with
+  // nothing in it is an empty box, and a slot the page does not have is not there, so both are left out and
+  // a character with nothing equipped has an empty list. A slot is listed once, from its first box.
+  private extractGear(document: Document): GearItem[] {
+    const boxes = this.querySelectorAll(document, 'div.ic_reflection_box');
+
+    const gear: GearItem[] = [];
+    for (const [slot, id] of GEAR_SLOTS) {
+      const box = boxes.find((candidate) => this.gearBoxId(candidate) === id);
+      if (!box) continue;
+
+      const image = this.querySelector(box, 'img.character__item_icon__img');
+      const icon = image ? this.getAttribute(image, 'src') : null;
+      if (!icon) continue;
+
+      gear.push({ Slot: slot, Icon: icon, Dyes: this.extractDyes(box) });
+    }
+    return gear;
+  }
+
+  // The id of a box, which is what follows icon-c-- in its class ("icon-c--0 ic_reflection_box ...").
+  private gearBoxId(box: Element): string | null {
+    const prefix = 'icon-c--';
+    const name = (box.attribs?.class ?? '').split(/\s+/).find((className) => className.startsWith(prefix));
+    return name === undefined ? null : name.slice(prefix.length);
+  }
+
+  // The colour of each dye coat that has paint, the first coat and then the second (the page writes them in
+  // that order). A coat is div.mirage_staining; it has paint when it is also painted_cover, and then its
+  // style gives the colour. A coat that is not painted ("no_paint"), or sits on an item that cannot be dyed
+  // ("unpaitable", spelt so on the page), has no dye, and neither has a painted one whose style is not a
+  // #rrggbb colour.
+  private extractDyes(box: Element): string[] {
+    const dyes: string[] = [];
+    for (const coat of this.querySelectorAll(box, 'div.mirage_staining')) {
+      if (!this.hasClass(coat, 'painted_cover')) continue;
+
+      const color = /background-color:\s*(#[0-9a-f]{6})\b/i.exec(coat.attribs?.style ?? '');
+      if (color) dyes.push(color[1].toLowerCase());
+    }
+    return dyes;
+  }
+
+  private hasClass(element: Element, className: string): boolean {
+    return (element.attribs?.class ?? '').split(/\s+/).includes(className);
   }
 
   // The text of the link whose href holds the company ID (FREE_COMPANY.NAME in character.json).

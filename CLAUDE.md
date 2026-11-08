@@ -46,7 +46,7 @@ npx tsc --noEmit
    - CORS: Supports ff14.tw domains only
 
 2. **Parsers** (`src/parsers/`): Specialized HTML parsers using htmlparser2
-   - `character-parser.ts`: Character profile data (enhanced with FC/PvP info)
+   - `character-parser.ts`: Character profile data (enhanced with FC/PvP info, and the icon and dyes of each gear slot)
    - `classjob-parser.ts`: Job levels for all classes
    - `achievements-parser.ts`: Achievement lists with pagination
    - `freecompany-parser.ts`: FC details including estate, reputation, focus
@@ -93,6 +93,12 @@ npx tsc --noEmit
   - `Name` is the real name (English for `dc=na`, Japanese for `dc=jp`) and `Icon` the image of the row
   - A page that counts rows but shows none the parser can read is a `ParseError` (502), never an empty list that would be cached
 
+- **Character Gear** (`Character.Gear`):
+  - The profile page shows each slot as a box (`div.icon-c--<id>.ic_reflection_box`) with only an icon and its dyes; the item name and level load later from a tooltip (`data-lazy_load_url`, `…/equipment/tooltip/<slot>`), so they are not in the answer. The old `gearset.json` read tooltips that are no longer on the page and matched nothing
+  - `Gear` is an array of `{ Slot, Icon, Dyes }` in the order MainHand, OffHand, Head, Body, Hands, Legs, Feet, Earrings, Necklace, Bracelets, Ring1, Ring2, SoulCrystal, Facewear, whatever the order of the page. A slot with no icon is left out, so a character with nothing equipped has `[]`
+  - `Dyes` holds the `#rrggbb` of each coat that has paint (`painted_cover`), the first coat and then the second (`div.stain2-mirage`); `no_paint` and `unpaitable` (as the page spells it) coats give none
+  - The page has no box 5 (the belt is gone); a box the parser does not know is not read. No captured page wears glasses, so the markup of `icon-c--glasses` with an item is assumed to be the one of the other slots
+
 - **Character Search** (`/search/character`):
   - Parameters: `name` (1 to 40 characters after trimming, counted by character rather than UTF-16 unit), `world` (empty, `_dc_<DataCenter>` or a world name, letters only), `page` (1 to 20, the most Lodestone shows) and `dc`; a value outside these rules, or any other parameter (Lodestone's own `worldname`, a typo), is a 400, so a misspelled filter never becomes a search of every world
   - Reads `https://{dc}.finalfantasyxiv.com/lodestone/character/?q=&worldname=&page=` and parses it with `CharacterSearchParser`
@@ -120,6 +126,7 @@ The `wrangler.toml` file contains:
 
 ### Implemented ✅
 - Character profile with FC/PvP associations
+- Character gear: the icon and dyes of each slot
 - All job levels (combat, crafting, gathering, special)
 - Achievement system with pagination
 - Free Company details (all fields from nodestone)
@@ -132,7 +139,7 @@ The `wrangler.toml` file contains:
 - Cross-world Linkshells (CWLS)
 - Linkshells
 - PvP Team details
-- Character equipment/gearset
+- Equipment names and item levels
 
 ## Common Patterns
 
@@ -156,6 +163,7 @@ The `wrangler.toml` file contains:
   - `profile/mount.json` and `profile/minion.json` are written for the mobile pages
   - `search/character.json` is upstream's file at commit 245db29 plus `ENTRY.FREE_COMPANY` (the company's ID and name) and `TOTAL`
   - `freecompany/freecompany.json`: the `GRAND_COMPANY` and `RANKING` regexes also read the Japanese page, and the grand company name comes without the space before its standing
+  - `profile/gearset.json` is removed: it read item tooltips that Lodestone no longer writes into the page. The gear is read in `character-parser.ts` instead (see Character Gear)
 - **Lodestone site**: `dc` picks which language site of Lodestone is read, `na` (English) or `jp` (Japanese); both show the same characters and Free Companies, whatever their data center
 - **Read-only**: No write operations to Lodestone
 - **CORS**: Must maintain security restrictions
