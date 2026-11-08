@@ -1,11 +1,15 @@
 import { readFileSync } from 'node:fs';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import worker from '../src/index';
+import { MOBILE_USER_AGENT } from '../src/lib/http';
 import { CharacterParser } from '../src/parsers/character-parser';
 import { createEnv, stubFetch, workerRequest } from './helpers/env';
 
 const profileNa = readFileSync(new URL('./fixtures/profile-na.html', import.meta.url), 'utf8');
 const classjobNa = readFileSync(new URL('./fixtures/classjob-na.html', import.meta.url), 'utf8');
+const mountNa = readFileSync(new URL('./fixtures/mount-mobile-na.html', import.meta.url), 'utf8');
+const mountJp = readFileSync(new URL('./fixtures/mount-mobile-jp.html', import.meta.url), 'utf8');
+const minionNa = readFileSync(new URL('./fixtures/minion-mobile-na.html', import.meta.url), 'utf8');
 
 const HOUR = 60 * 60 * 1000;
 
@@ -472,4 +476,144 @@ describe('the Lodestone site of the data center', () => {
     expect(body.ClassJobs.CombatJobs.MagicalDPS.Pictomancer.Level).toBe('91');
     expect(body.ClassJobs.CombatJobs.MagicalDPS.BlueMage.Level).toBe('50');
   });
+});
+
+// Lodestone writes the name of every mount and minion only on its mobile layout, and picks the
+// layout by User-Agent. The other endpoints read the desktop layout.
+const MOBILE_ENDPOINTS = ['mounts', 'minions'];
+const MOBILE_PAGES = [
+  { path: '/character/1/mounts', page: 'https://na.finalfantasyxiv.com/lodestone/character/1/mount', body: mountNa },
+  { path: '/character/1/mounts?dc=jp', page: 'https://jp.finalfantasyxiv.com/lodestone/character/1/mount', body: mountJp },
+  { path: '/character/1/minions', page: 'https://na.finalfantasyxiv.com/lodestone/character/1/minion', body: minionNa },
+];
+
+const userAgentOf = (call: { init?: RequestInit }) => new Headers(call.init?.headers).get('User-Agent');
+const LODESTONE_ICON = /^https:\/\/lds-img\.finalfantasyxiv\.com\/itemicon\/[0-9a-f]{2}\/[0-9a-f]{40}\.png/;
+
+describe('the mount and minion pages', () => {
+  test('the mobile User-Agent is the iPhone one the pages were captured with', () => {
+    expect(MOBILE_USER_AGENT).toBe(
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1',
+    );
+  });
+
+  for (const { path, page, body } of MOBILE_PAGES) {
+    test(`${path} reads ${page} with the mobile User-Agent`, async () => {
+      const { env } = createEnv();
+      const calls = stubFetch(() => htmlPage(body));
+
+      await worker.fetch(workerRequest(path), env);
+
+      expect(calls.map((call) => call.url)).toEqual([page]);
+      expect(userAgentOf(calls[0])).toBe(MOBILE_USER_AGENT);
+    });
+  }
+
+  for (const { path } of ENDPOINTS.filter(({ name }) => !MOBILE_ENDPOINTS.includes(name))) {
+    test(`${path} is still read without the mobile User-Agent`, async () => {
+      const { env } = createEnv();
+      const calls = stubFetch(() => htmlPage('<html><body></body></html>'));
+
+      await worker.fetch(workerRequest(path), env);
+
+      expect(calls).toHaveLength(1);
+      expect(userAgentOf(calls[0])).not.toBe(MOBILE_USER_AGENT);
+    });
+  }
+
+  test('/mounts answers with the name and icon of every mount', async () => {
+    vi.setSystemTime(Date.UTC(2026, 10, 8, 2, 30));
+    const { env } = createEnv();
+    stubFetch(() => htmlPage(mountNa));
+
+    const response = await worker.fetch(workerRequest('/character/1/mounts'), env);
+    const body = (await response.json()) as {
+      CharacterID: number;
+      Mounts: Array<{ Name: string; Icon: string }>;
+      Total: number;
+      FetchedAt: string;
+    };
+
+    expect(response.status).toBe(200);
+    expect(body.CharacterID).toBe(1);
+    expect(body.Mounts.map(({ Name }) => Name)).toEqual(['Company Chocobo', 'Black Chocobo', 'Fat Chocobo']);
+    for (const { Icon } of body.Mounts) {
+      expect(Icon).toMatch(LODESTONE_ICON);
+    }
+    expect(body.Total).toBe(3);
+    expect(body.FetchedAt).toBe('2026-11-08T02:30:00.000Z');
+  });
+
+  test('/mounts?dc=jp answers with the Japanese names as Lodestone writes them', async () => {
+    const { env } = createEnv();
+    stubFetch(() => htmlPage(mountJp));
+
+    const response = await worker.fetch(workerRequest('/character/1/mounts?dc=jp'), env);
+    const body = (await response.json()) as { Mounts: Array<{ Name: string }> };
+
+    expect(body.Mounts.map(({ Name }) => Name)).toEqual(['マイチョコボ', '黒チョコボ', 'でぶチョコボ']);
+  });
+
+  test('/minions answers with the name and icon of every minion', async () => {
+    const { env } = createEnv();
+    stubFetch(() => htmlPage(minionNa));
+
+    const response = await worker.fetch(workerRequest('/character/1/minions'), env);
+    const body = (await response.json()) as {
+      CharacterID: number;
+      Minions: Array<{ Name: string; Icon: string }>;
+      Total: number;
+    };
+
+    expect(response.status).toBe(200);
+    expect(body.CharacterID).toBe(1);
+    expect(body.Minions.map(({ Name }) => Name)).toEqual([
+      'Wayward Hatchling',
+      'Serpent Hatchling',
+      'Black Chocobo Chick',
+    ]);
+    for (const { Icon } of body.Minions) {
+      expect(Icon).toMatch(LODESTONE_ICON);
+    }
+    expect(body.Total).toBe(3);
+  });
+
+  // A page that counts rows but shows none the parser can read is a layout the Worker does not know,
+  // not an empty collection: answering [] would keep that in KV as the truth. A collection that
+  // really is empty says 0, and that is an answer like any other.
+  const withoutRows = (html: string) => html.replace(/<li\b[\s\S]*<\/li>/, '');
+  const COUNTED = [
+    { path: '/character/1/mounts', key: 'v2:mounts:na:1', list: 'Mounts', page: mountNa },
+    { path: '/character/1/minions', key: 'v2:minions:na:1', list: 'Minions', page: minionNa },
+  ];
+
+  for (const { path, key, list, page } of COUNTED) {
+    test(`${path} with a total but no rows is a 502 upstream and caches nothing`, async () => {
+      const { env, kv } = createEnv();
+      stubFetch(() => htmlPage(withoutRows(page)));
+
+      const response = await worker.fetch(workerRequest(path), env);
+
+      expect(response.status).toBe(502);
+      expect(await response.json()).toEqual({ error: 'upstream' });
+      expect(kv.size).toBe(0);
+    });
+
+    test(`${path} with a total of 0 and no rows is an empty collection, cached like any other`, async () => {
+      vi.setSystemTime(Date.UTC(2026, 10, 8, 2, 30));
+      const { env, kv } = createEnv();
+      stubFetch(() => htmlPage(withoutRows(page).replace('<span>3</span>', '<span>0</span>')));
+
+      const response = await worker.fetch(workerRequest(path), env);
+
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({
+        CharacterID: 1,
+        [list]: [],
+        Total: 0,
+        FetchedAt: '2026-11-08T02:30:00.000Z',
+      });
+      expect([...kv.keys()]).toEqual([key]);
+    });
+  }
 });

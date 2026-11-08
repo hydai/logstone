@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<!--
+  Minimal stand-in for the mobile Lodestone minion page (English).
+  Real page: https://na.finalfantasyxiv.com/lodestone/character/<id>/minion, fetched with the iPhone User-Agent.
+
+  Only the elements reached by the selectors in src/lib/lodestone-css-selectors/profile/minion.json
+  are kept, in the markup the page uses: the total and three rows of the list. The minions are real
+  ones (their names and icons are game data); the character ID in the tooltip links is made up.
+  The total sits in a "minion__sort__total" element, as on the mount page.
+-->
+<html lang="en">
+<body>
+<div id="character" class="ldst__window">
+  <div class="character__content selected">
+    <div class="character__minions">
+      <div class="select-pulldown__minion_mount">
+        <p class="minion__sort__total com">Total: <span>3</span></p>
+      </div>
+      <ul class="minion__list js__minion_list">
+        <li class="minion__list__item"data-tooltip_href="/lodestone/character/12345678/minion/tooltip/090ae4ceca72d52ecf5e6b7fe7043d8f329efbfc">
+          <span class="minion__anchor" id="090ae4ceca72d52ecf5e6b7fe7043d8f329efbfc"></span>
+          <div class="minion__list__inner js__minion_press js__character_list_inner">
+            <div class="minion__list__icon">
+              <div class="minion__list__icon__inner ">
+                <img src="https://lds-img.finalfantasyxiv.com/itemicon/82/828a8ce3af34af8c5bdb41b1f14f9b7e94435193.png?n7.57" width="32" height="32" alt="" class="minion__list__icon__image lazy_loading" loading="lazy">
+              </div>
+            </div>
+            <div class="minion__list__text"><span class="minion__name">Wayward Hatchling</span></div>
+          </div>
+        </li>
+        <li class="minion__list__item"data-tooltip_href="/lodestone/character/12345678/minion/tooltip/f770c6f7d02c7f8d7385c2479d43289bb9c23817">
+          <span class="minion__anchor" id="f770c6f7d02c7f8d7385c2479d43289bb9c23817"></span>
+          <div class="minion__list__inner js__minion_press js__character_list_inner">
+            <div class="minion__list__icon">
+              <div class="minion__list__icon__inner ">
+                <img src="https://lds-img.finalfantasyxiv.com/itemicon/09/094003bfc6d5bb11f0b75fa7eb2c9be4b77fd2f6.png?n7.57" width="32" height="32" alt="" class="minion__list__icon__image lazy_loading" loading="lazy">
+              </div>
+            </div>
+            <div class="minion__list__text"><span class="minion__name">Serpent Hatchling</span></div>
+          </div>
+        </li>
+        <li class="minion__list__item"data-tooltip_href="/lodestone/character/12345678/minion/tooltip/26364ac2a13b1caddd4c4be73857a274f1d43331">
+          <span class="minion__anchor" id="26364ac2a13b1caddd4c4be73857a274f1d43331"></span>
+          <div class="minion__list__inner js__minion_press js__character_list_inner">
+            <div class="minion__list__icon">
+              <div class="minion__list__icon__inner ">
+                <img src="https://lds-img.finalfantasyxiv.com/itemicon/32/32499e159aabfec75ae59adcc60209c047382a42.png?n7.57" width="32" height="32" alt="" class="minion__list__icon__image lazy_loading" loading="lazy">
+              </div>
+            </div>
+            <div class="minion__list__text"><span class="minion__name">Black Chocobo Chick</span></div>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+</body>
+</html>

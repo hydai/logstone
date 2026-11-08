@@ -5,7 +5,15 @@ import { FreeCompanyParser } from './parsers/freecompany-parser';
 import { FreeCompanyMembersParser } from './parsers/freecompany-members-parser';
 import { MinionParser } from './parsers/minion-parser';
 import { MountParser } from './parsers/mount-parser';
-import { cacheKey, errorStatus, fetchUpstreamText, parseDc, parsePage, withFetchedAt } from './lib/http';
+import {
+  MOBILE_USER_AGENT,
+  cacheKey,
+  errorStatus,
+  fetchUpstreamText,
+  parseDc,
+  parsePage,
+  withFetchedAt,
+} from './lib/http';
 
 export interface Env {
   LOGSTONE: KVNamespace;
@@ -370,7 +378,8 @@ async function handleMinionsRequest(characterId: string, request: Request, env: 
 async function fetchMinionsData(characterId: string, dc: 'na' | 'jp'): Promise<any> {
   const url = `https://${dc}.finalfantasyxiv.com/lodestone/character/${characterId}/minion`;
 
-  const html = await fetchUpstreamText(url);
+  // Only the mobile page writes the names of the minions.
+  const html = await fetchUpstreamText(url, { headers: { 'User-Agent': MOBILE_USER_AGENT } });
 
   // 解析 HTML 並提取寵物資料
   const parser = new MinionParser();
@@ -396,7 +405,8 @@ async function handleMountsRequest(characterId: string, request: Request, env: E
 async function fetchMountsData(characterId: string, dc: 'na' | 'jp'): Promise<any> {
   const url = `https://${dc}.finalfantasyxiv.com/lodestone/character/${characterId}/mount`;
 
-  const html = await fetchUpstreamText(url);
+  // Only the mobile page writes the names of the mounts.
+  const html = await fetchUpstreamText(url, { headers: { 'User-Agent': MOBILE_USER_AGENT } });
 
   // 解析 HTML 並提取坐騎資料
   const parser = new MountParser();

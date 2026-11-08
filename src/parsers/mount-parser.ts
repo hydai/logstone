@@ -1,5 +1,6 @@
 import { parseDocument } from 'htmlparser2';
 import { Element, Document } from 'domhandler';
+import { ParseError } from '../lib/http';
 import * as mountSelectors from '../lib/lodestone-css-selectors/profile/mount.json';
 
 interface MountData {
@@ -42,6 +43,13 @@ export class MountParser {
       }
     }
 
+    // The page counts mounts but not one row could be read: it is not the layout these selectors know,
+    // and an empty list would be kept as the answer. A total of 0, or no total to be found (it is then
+    // the number of rows, 0 here), is a collection that really is empty, and stays an answer.
+    if (mounts.length === 0 && total > 0) {
+      throw new ParseError(`The page counts ${total} mounts but no row could be read`);
+    }
+
     return {
       Mounts: mounts,
       Total: total
@@ -51,15 +59,10 @@ export class MountParser {
   private parseMountEntry(element: Element): MountData | null {
     const mount: any = {};
 
-    // 解析 tooltip URL 來獲取名稱
-    if (mountSelectors.MOUNTS.TOOLTIP) {
-      // 直接從 element 本身獲取 attribute
-      const tooltipUrl = this.getAttribute(element, mountSelectors.MOUNTS.TOOLTIP.attribute || 'data-tooltip_href') || '';
-      if (tooltipUrl) {
-        // 從 URL 中提取最後一部分作為 ID
-        const parts = tooltipUrl.split('/');
-        mount.Name = `Mount-${parts[parts.length - 1]}`;
-      }
+    // The mobile page writes the name in the row itself (the desktop page only links to a tooltip)
+    const nameElement = this.querySelector(element, mountSelectors.MOUNTS.NAME.selector);
+    if (nameElement) {
+      mount.Name = this.getTextContent(nameElement);
     }
 
     // 解析圖標

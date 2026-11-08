@@ -1,5 +1,6 @@
 import { parseDocument } from 'htmlparser2';
 import { Element, Document } from 'domhandler';
+import { ParseError } from '../lib/http';
 import * as minionSelectors from '../lib/lodestone-css-selectors/profile/minion.json';
 
 interface MinionData {
@@ -42,6 +43,13 @@ export class MinionParser {
       }
     }
 
+    // The page counts minions but not one row could be read: it is not the layout these selectors know,
+    // and an empty list would be kept as the answer. A total of 0, or no total to be found (it is then
+    // the number of rows, 0 here), is a collection that really is empty, and stays an answer.
+    if (minions.length === 0 && total > 0) {
+      throw new ParseError(`The page counts ${total} minions but no row could be read`);
+    }
+
     return {
       Minions: minions,
       Total: total
@@ -51,15 +59,10 @@ export class MinionParser {
   private parseMinionEntry(element: Element): MinionData | null {
     const minion: any = {};
 
-    // 解析 tooltip URL 來獲取名稱
-    if (minionSelectors.MINIONS.TOOLTIP) {
-      // 直接從 element 本身獲取 attribute
-      const tooltipUrl = this.getAttribute(element, minionSelectors.MINIONS.TOOLTIP.attribute || 'data-tooltip_href') || '';
-      if (tooltipUrl) {
-        // 從 URL 中提取最後一部分作為 ID
-        const parts = tooltipUrl.split('/');
-        minion.Name = `Minion-${parts[parts.length - 1]}`;
-      }
+    // The mobile page writes the name in the row itself (the desktop page only links to a tooltip)
+    const nameElement = this.querySelector(element, minionSelectors.MINIONS.NAME.selector);
+    if (nameElement) {
+      minion.Name = this.getTextContent(nameElement);
     }
 
     // 解析圖標

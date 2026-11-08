@@ -57,6 +57,13 @@ export function errorStatus(error: unknown): { status: number; code: ErrorCode }
 }
 
 /**
+ * The User-Agent of an iPhone, which makes Lodestone answer with its mobile layout. The mount and
+ * minion lists write the name of every row only there: the desktop layout gives a tooltip link per row.
+ */
+export const MOBILE_USER_AGENT =
+  'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1';
+
+/**
  * Fetch a Lodestone page and return its text. Everything that can go wrong while talking to
  * Lodestone becomes an UpstreamError, so nobody mistakes it for a bug in the Worker: an HTTP
  * error status keeps its status, and a request that gets no answer or a response whose body
