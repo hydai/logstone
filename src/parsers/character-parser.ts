@@ -1,5 +1,6 @@
 import { parseDocument } from 'htmlparser2';
 import { Element, Document } from 'domhandler';
+import { activeJobKey } from '../lib/job-icons';
 import * as characterSelectors from '../lib/lodestone-css-selectors/profile/character.json';
 import * as attributesSelectors from '../lib/lodestone-css-selectors/profile/attributes.json';
 import * as gearsetSelectors from '../lib/lodestone-css-selectors/profile/gearset.json';
@@ -45,23 +46,43 @@ export class CharacterParser {
     }
 
     // 特殊處理某些複雜的欄位
-    result = this.processSpecialFields(result);
+    result = this.processSpecialFields(result, document);
 
     return result;
   }
 
-  private processSpecialFields(result: any): any {
-    // 處理 Free Company
+  private processSpecialFields(result: any, document: Document): any {
+    // Free Company: the selector only reads the ID out of the link's href, the name is the
+    // text of that same link. A character without a company has none of it, which is null.
     if (result.FreeCompany?.Name?.ID) {
-      // 根據現有的選擇器，我們只能取得 ID
       result.FreeCompany = {
         ID: result.FreeCompany.Name.ID,
+        Name: this.extractFreeCompanyName(document),
         Crest: [
           result.FreeCompany.IconLayers?.Bottom || null,
           result.FreeCompany.IconLayers?.Middle || null,
           result.FreeCompany.IconLayers?.Top || null
         ].filter(Boolean)
       };
+    } else {
+      result.FreeCompany = null;
+    }
+
+    // Active job: the icon, the level and the job the icon belongs to. ActiveClassjob and
+    // ActiveClassjobLevel stay as they are because the website still reads them.
+    const icon = typeof result.ActiveClassjob === 'string' && result.ActiveClassjob ? result.ActiveClassjob : null;
+    result.ActiveClassJob = {
+      Key: activeJobKey(icon),
+      Level: this.parseLevel(result.ActiveClassjobLevel),
+      Icon: icon
+    };
+
+    // The bio is the one text where a player's own line breaks matter, so <br> becomes "\n"
+    // here instead of being dropped as in the other texts.
+    const bioSelector = this.selectors.BIO?.selector;
+    const bio = bioSelector ? this.querySelector(document, bioSelector) : null;
+    if (bio) {
+      result.Bio = this.getTextWithLineBreaks(bio).trim();
     }
 
     // 處理 PvP Team
@@ -82,6 +103,22 @@ export class CharacterParser {
     // 處理 Town - 保持原有結構
 
     return result;
+  }
+
+  // The text of the link whose href holds the company ID (FREE_COMPANY.NAME in character.json).
+  private extractFreeCompanyName(document: Document): string {
+    const selector = this.selectors.FREE_COMPANY?.NAME?.selector;
+    const link = selector ? this.querySelector(document, selector) : null;
+    return link ? this.getTextContent(link) : '';
+  }
+
+  // The level is the first number on the class line, which the Japanese site continues with the
+  // name of the job ("LEVEL 100 吟遊詩人"). `level` is what the selector found: an object with a
+  // Level, or nothing when the line did not match.
+  private parseLevel(level: any): number | null {
+    const text = typeof level === 'object' && level !== null ? level.Level : level;
+    const digits = /\d+/.exec(String(text ?? ''));
+    return digits ? Number(digits[0]) : null;
   }
 
   private isValidValue(value: any): boolean {
@@ -299,6 +336,22 @@ export class CharacterParser {
     }
 
     return text.trim();
+  }
+
+  // Like getTextContent, but a <br> is a line break, and nothing is trimmed on the way.
+  private getTextWithLineBreaks(element: Element): string {
+    let text = '';
+
+    for (const child of element.children) {
+      if (child.type === 'text') {
+        text += (child as any).data || '';
+      } else if (child.type === 'tag') {
+        const tag = child as Element;
+        text += tag.name === 'br' ? '\n' : this.getTextWithLineBreaks(tag);
+      }
+    }
+
+    return text;
   }
 
   private applyRegex(value: string, regex: string): any {

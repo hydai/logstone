@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<!--
+  Minimal stand-in for a Lodestone character page (Japanese).
+  Real page: https://jp.finalfantasyxiv.com/lodestone/character/<id>/
+
+  The same elements in the same order as profile-na.html, with the text the Japanese site
+  writes. The line above the class icon also names the job ("LEVEL 100 吟遊詩人"), which the
+  English page does not, and the bio uses <br /> the way the site does.
+  Everything that identifies a player (name, free company, ID, avatar, portrait, crest,
+  bio) is made up. The item tooltips that gearset.json expects are loaded lazily on the
+  real page, so those selectors match nothing there, and nothing here.
+-->
+<html lang="ja">
+<body>
+<div id="character" class="ldst__window">
+  <div class="frame__chara js__toggle_wrapper">
+    <a href="/lodestone/character/12345679/" class="frame__chara__link state_btn">
+      <div class="frame__chara__face">
+        <img src="https://img2.finalfantasyxiv.com/f/00000000000000000000000000000000_00000000000000000000000000000000fc0.jpg?1700000000" width="40" height="40" alt="">
+      </div>
+      <div class="frame__chara__box">
+        <p class="frame__chara__title">サンプルの称号</p>
+        <p class="frame__chara__name">Sakura Senshi</p>
+        <p class="frame__chara__world"><i class="xiv-lds xiv-lds-home-world js__tooltip" data-tooltip="ホームワールド"></i>Tonberry [Elemental]</p>
+      </div>
+    </a>
+  </div>
+
+  <div class="character__content selected">
+    <div class="heading__flex"><h3>プロフィール</h3></div>
+    <div class="character__profile clearfix">
+      <div class="character__profile__data">
+        <div class="js__character_toggle">
+          <div class="character__profile__data__detail">
+            <div class="character-block">
+              <img src="https://img2.finalfantasyxiv.com/f/00000000000000000000000000000000_00000000000000000000000000000000fc0.jpg?1700000000" width="32" height="32" alt="" class="character-block__face">
+              <div class="character-block__box">
+                <p class="character-block__title">種族/部族/性別</p>
+                <p class="character-block__name">ララフェル<br />プレーンフォーク / ♀</p>
+              </div>
+            </div>
+            <div class="character-block">
+              <img src="https://lds-img.finalfantasyxiv.com/h/T/T7o6XAzSyUsT2WA06L_XlK4SDQ.png" width="32" height="32" alt="">
+              <div class="character-block__box">
+                <p class="character-block__title">誕生日</p>
+                <p class="character-block__birth">霊2月(4月) 17日</p>
+                <p class="character-block__title">守護神</p>
+                <p class="character-block__name">メネフィナ</p>
+              </div>
+            </div>
+            <div class="character-block">
+              <img src="https://lds-img.finalfantasyxiv.com/h/u/ZHuDKgNULSbEA_VTXdjeA9MlEs.png" width="32" height="32" alt="">
+              <div class="character-block__box">
+                <p class="character-block__title">開始都市</p>
+                <p class="character-block__name">グリダニア</p>
+              </div>
+            </div>
+            <div class="character-block">
+              <img src="https://lds-img.finalfantasyxiv.com/h/Z/7xyFk9EAcDABJVaW-i7UADLfOM.png" width="32" height="32" alt="">
+              <div class="character-block__box">
+                <p class="character-block__title">所属グランドカンパニー</p>
+                <p class="character-block__name">双蛇党 / 少牙士</p>
+              </div>
+            </div>
+            <div class="character-block">
+              <div class="character__freecompany__crest">
+                <div class="character__freecompany__crest__image">
+                  <img src="https://img2.finalfantasyxiv.com/c/B00_00000000000000000000000000000000_00_40x40.png" width="28" height="28">
+                  <img src="https://img2.finalfantasyxiv.com/c/F00_00000000000000000000000000000000_00_40x40.png" width="28" height="28">
+                  <img src="https://img2.finalfantasyxiv.com/c/S00_00000000000000000000000000000000_00_40x40.png" width="28" height="28">
+                </div>
+              </div>
+              <div class="character-block__box">
+                <div class="character__freecompany__name">
+                  <p>フリーカンパニー</p>
+                  <h4><a href="/lodestone/freecompany/9230000000000000002/">サンプルカンパニー</a></h4>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="js__character_toggle hide">
+          <h3 class="heading--lead">Attributes</h3>
+          <table class="character__param__list">
+            <tr><th><span class="js__tooltip" data-tooltip="STR">STR</span></th><td>400</td></tr>
+            <tr><th><span class="js__tooltip" data-tooltip="DEX">DEX</span></th><td>5000</td></tr>
+            <tr><th><span class="js__tooltip" data-tooltip="VIT">VIT</span></th><td>6000</td></tr>
+            <tr><th><span class="js__tooltip" data-tooltip="INT">INT</span></th><td>350</td></tr>
+            <tr><th><span class="js__tooltip" data-tooltip="MND">MND</span></th><td>340</td></tr>
+          </table>
+          <h3 class="heading--lead">Offense</h3>
+          <table class="character__param__list">
+            <tr><th><span class="js__tooltip" data-tooltip="クリティカル">クリティカル</span></th><td>3000</td></tr>
+            <tr><th><span class="js__tooltip" data-tooltip="意思力">意思力</span></th><td>2000</td></tr>
+            <tr><th><span class="js__tooltip" data-tooltip="ダイレクトヒット">ダイレクトヒット</span></th><td>1900</td></tr>
+          </table>
+          <h3 class="heading--lead">Defense</h3>
+          <table class="character__param__list">
+            <tr><th><span class="js__tooltip" data-tooltip="物理防御力">物理防御力</span></th><td>4000</td></tr>
+            <tr><th><span class="js__tooltip" data-tooltip="魔法防御力">魔法防御力</span></th><td>4100</td></tr>
+          </table>
+          <h3 class="heading--lead">Melee</h3>
+          <table class="character__param__list">
+            <tr><th><span class="js__tooltip" data-tooltip="物理攻撃力">物理攻撃力</span></th><td>5000</td></tr>
+            <tr><th><span class="js__tooltip" data-tooltip="スキルスピード">スキルスピード</span></th><td>500</td></tr>
+          </table>
+          <h3 class="heading--lead">Spell</h3>
+          <table class="character__param__list">
+            <tr><th><span class="js__tooltip" data-tooltip="攻撃魔法威力">攻撃魔法威力</span></th><td>350</td></tr>
+            <tr><th><span class="js__tooltip" data-tooltip="回復魔法威力">回復魔法威力</span></th><td>340</td></tr>
+            <tr><th><span class="js__tooltip" data-tooltip="スペルスピード">スペルスピード</span></th><td>400</td></tr>
+          </table>
+          <h3 class="heading--lead">Role</h3>
+          <table class="character__param__list">
+            <tr><th><span class="js__tooltip" data-tooltip="タフネス">タフネス</span></th><td>420</td></tr>
+            <tr><th><span class="js__tooltip" data-tooltip="信仰">信仰</span></th><td>440</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="character__profile__detail">
+        <div class="character__view clearfix">
+          <div class="character__class">
+            <div class="character__class__data">
+              <p>LEVEL 100 吟遊詩人</p>
+              <div class="character__class_icon">
+                <img src="https://lds-img.finalfantasyxiv.com/h/F/KWI-9P3RX_Ojjn_mwCS2N0-3TI.png" width="24" height="24" alt="">
+              </div>
+            </div>
+          </div>
+          <div class="character__detail">
+            <div class="character__detail__image">
+              <a href="https://img2.finalfantasyxiv.com/f/00000000000000000000000000000000_00000000000000000000000000000000fl0.jpg?1700000000" class="js__image_popup">
+                <img src="https://img2.finalfantasyxiv.com/f/00000000000000000000000000000000_00000000000000000000000000000000fl0.jpg?1700000000" width="220" height="300" alt="">
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="js__character_toggle hide">
+          <div class="character__param">
+            <ul>
+              <li><div><p class="character__param__text character__param__text__hp--ja">HP</p><span>150000</span></div></li>
+              <li><div><p class="character__param__text character__param__text__mp--ja">MP</p><span>10000</span></div></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="heading__icon parts__space--reset"><h3>自己紹介</h3></div>
+    <div class="character__selfintroduction">一行目<br />二行目</div>
+  </div>
+</div>
+</body>
+</html>
