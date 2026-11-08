@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<!--
+  Minimal stand-in for a Lodestone achievement history page (English).
+  Real page: https://na.finalfantasyxiv.com/lodestone/character/<id>/achievement/
+
+  Only the elements reached by the selectors in
+  src/lib/lodestone-css-selectors/profile/achievements.json are kept, in the same nesting and
+  order as the real page (nth-child positions matter): the points, the total, the pager, and
+  the entries.
+  The page writes each date with a script: the span shows a dash until
+  ldst_strftime(<unix seconds>, 'YMD') fills it in, so the time is only in the script.
+  The achievements are real ones (their names and IDs are game data); the dates are made up,
+  and so are the character ID in the links, the total, the points and the number of pages.
+  The last entry has no script, for a date the page does not give.
+-->
+<html lang="en">
+<body>
+<div id="character" class="ldst__window">
+  <div class="character__content selected" id="anchor_achievement">
+    <div class="clearfix parts__space--add">
+      <div class="ldst__category">
+        <p class="achievement__point">4320</p>
+      </div>
+      <div class="ldst__achievement">
+        <div class="achievement__pulldown">
+          <div class="parts__total">512 Total</div>
+        </div>
+        <ul class="btn__pager">
+          <li><a href="javascript:void(0);" class="icon-list__pager btn__pager__prev--all btn__pager__no"></a></li>
+          <li><a href="javascript:void(0);" class="icon-list__pager btn__pager__prev btn__pager__no"></a></li>
+          <li class="btn__pager__current">Page 1 of 11</li>
+          <li><a href="https://na.finalfantasyxiv.com/lodestone/character/12345678/achievement/?page=2" class="icon-list__pager btn__pager__next js__tooltip" data-tooltip="Next"></a></li>
+          <li><a href="https://na.finalfantasyxiv.com/lodestone/character/12345678/achievement/?page=11" class="icon-list__pager btn__pager__next--all js__tooltip" data-tooltip="Last"></a></li>
+        </ul>
+        <ul>
+          <li class="entry">
+            <a href="/lodestone/character/12345678/achievement/detail/4071/" class="entry__achievement">
+              <div class="entry__achievement__item">
+                <div class="entry__achievement__frame">
+                  <img src="https://lds-img.finalfantasyxiv.com/itemicon/00/0000000000000000000000000000000000000000.png?n7.00" width="40" height="40" alt="">
+                </div>
+              </div>
+              <div class="entry__achievement--list entry__achievement--history">
+                <time class="entry__activity__time">
+
+<span id="datetime-0000000a001">-</span>
+<script>
+document.getElementById('datetime-0000000a001').innerHTML = ldst_strftime(1700000000, 'YMD');
+</script>
+
+</time>
+                <p class="entry__activity__txt">Character achievement "Masterstroke II" earned!</p>
+              </div>
+            </a>
+          </li>
+          <li class="entry">
+            <a href="/lodestone/character/12345678/achievement/detail/591/" class="entry__achievement">
+              <div class="entry__achievement__item">
+                <div class="entry__achievement__frame">
+                  <img src="https://lds-img.finalfantasyxiv.com/itemicon/00/0000000000000000000000000000000000000000.png?n7.00" width="40" height="40" alt="">
+                </div>
+              </div>
+              <div class="entry__achievement--list entry__achievement--history">
+                <time class="entry__activity__time">
+
+<span id="datetime-0000000a002">-</span>
+<script>
+document.getElementById('datetime-0000000a002').innerHTML = ldst_strftime(1700086400, 'YMD');
+</script>
+
+</time>
+                <p class="entry__activity__txt">Grand Company achievement "Pimp Your Ride" earned!</p>
+              </div>
+            </a>
+          </li>
+          <li class="entry">
+            <a href="/lodestone/character/12345678/achievement/detail/3957/" class="entry__achievement">
+              <div class="entry__achievement__item">
+                <div class="entry__achievement__frame">
+                  <img src="https://lds-img.finalfantasyxiv.com/itemicon/00/0000000000000000000000000000000000000000.png?n7.00" width="40" height="40" alt="">
+                </div>
+              </div>
+              <div class="entry__achievement--list entry__achievement--history">
+                <time class="entry__activity__time">
+
+<span id="datetime-0000000a003">-</span>
+<script>
+document.getElementById('datetime-0000000a003').innerHTML = ldst_strftime(1699000000, 'YMD');
+</script>
+
+</time>
+                <p class="entry__activity__txt">Items achievement "Cut Above the Rest: Blade Occultum" earned!</p>
+              </div>
+            </a>
+          </li>
+          <li class="entry">
+            <a href="/lodestone/character/12345678/achievement/detail/3436/" class="entry__achievement">
+              <div class="entry__achievement__item">
+                <div class="entry__achievement__frame">
+                  <img src="https://lds-img.finalfantasyxiv.com/itemicon/00/0000000000000000000000000000000000000000.png?n7.00" width="40" height="40" alt="">
+                </div>
+              </div>
+              <div class="entry__achievement--list entry__achievement--history">
+                <time class="entry__activity__time">
+
+<span id="datetime-0000000a004">-</span>
+
+</time>
+                <p class="entry__activity__txt">Character achievement "Through the Gate X" earned!</p>
+              </div>
+            </a>
+          </li>
+        </ul>
+        <ul class="btn__pager">
+          <li><a href="javascript:void(0);" class="icon-list__pager btn__pager__prev--all btn__pager__no"></a></li>
+          <li><a href="javascript:void(0);" class="icon-list__pager btn__pager__prev btn__pager__no"></a></li>
+          <li class="btn__pager__current">Page 1 of 11</li>
+          <li><a href="https://na.finalfantasyxiv.com/lodestone/character/12345678/achievement/?page=2" class="icon-list__pager btn__pager__next js__tooltip" data-tooltip="Next"></a></li>
+          <li><a href="https://na.finalfantasyxiv.com/lodestone/character/12345678/achievement/?page=11" class="icon-list__pager btn__pager__next--all js__tooltip" data-tooltip="Last"></a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

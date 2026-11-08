@@ -1,5 +1,5 @@
 import { parseDocument } from 'htmlparser2';
-import { Element, Document } from 'domhandler';
+import { Element, Document, isTag } from 'domhandler';
 import * as achievementsSelectors from '../lib/lodestone-css-selectors/profile/achievements.json';
 
 interface SelectorDefinition {
@@ -92,7 +92,9 @@ export class AchievementsParser {
       const timeText = timeElement ? this.getTextContent(timeElement) : '';
       const timeMatch = this.applyRegex(timeText, this.selectors.ENTRY.TIME.regex);
       const timestamp = timeMatch?.Timestamp ? parseInt(timeMatch.Timestamp) * 1000 : 0;
-      const time = timestamp ? new Date(timestamp).toISOString() : '';
+      const date = new Date(timestamp);
+      // 0 is no date. A number past the last time a Date can hold would make toISOString throw.
+      const time = timestamp && !Number.isNaN(date.getTime()) ? date.toISOString() : '';
 
       if (id && name) {
         return { ID: id, Name: name, Time: time };
@@ -168,7 +170,9 @@ export class AchievementsParser {
         for (const el of current) {
           if ('children' in el) {
             for (const child of el.children) {
-              if (child.type === 'tag' && this.matchesSelector(child as Element, part.selector)) {
+              // isTag, not type === 'tag': htmlparser2 gives <script> and <style> a type of their own,
+              // and the date of an achievement is in a <script>.
+              if (isTag(child) && this.matchesSelector(child as Element, part.selector)) {
                 next.push(child as Element);
               }
             }
@@ -205,7 +209,7 @@ export class AchievementsParser {
   private findDescendants(node: Document | Element, selector: string, results: Element[]): void {
     if ('children' in node) {
       for (const child of node.children) {
-        if (child.type === 'tag') {
+        if (isTag(child)) {
           const element = child as Element;
           if (this.matchesSelector(element, selector)) {
             results.push(element);
