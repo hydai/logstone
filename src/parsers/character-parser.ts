@@ -28,7 +28,7 @@ export class CharacterParser {
 
     // Skip problematic selectors that are too broad
     const skipFields = ['CLASSJOB_ICONS'];
-    
+
     // 解析所有可用的欄位
     for (const field in this.selectors) {
       if (this.selectors.hasOwnProperty(field) && !skipFields.includes(field)) {
@@ -64,7 +64,7 @@ export class CharacterParser {
       };
     }
 
-    // 處理 PvP Team  
+    // 處理 PvP Team
     if (result.PvpTeam?.Name?.ID) {
       // 根據現有的選擇器，我們只能取得 ID
       result.PvPTeam = {
@@ -90,7 +90,7 @@ export class CharacterParser {
       // Skip arrays with too many items (likely incorrect selector)
       if (value.length > 50) return false;
       // Skip arrays with only text content from navigation
-      if (value.length > 0 && typeof value[0] === 'string' && 
+      if (value.length > 0 && typeof value[0] === 'string' &&
           value.some(v => v.includes('News') || v.includes('Community') || v.includes('Play Guide'))) {
         return false;
       }
@@ -113,7 +113,7 @@ export class CharacterParser {
           }
         });
       }
-      
+
       const element = this.querySelector(document, definition.selector);
       if (!element) return null;
 
@@ -136,7 +136,7 @@ export class CharacterParser {
     for (const key in definition) {
       if (definition.hasOwnProperty(key) && key !== 'default') {
         const value = this.extractField(document, definition[key]);
-        if (value !== null && value !== undefined && 
+        if (value !== null && value !== undefined &&
             (typeof value !== 'object' || Object.keys(value).length > 0)) {
           result[this.formatFieldName(key)] = value;
         }
@@ -156,13 +156,13 @@ export class CharacterParser {
   private querySelectorAll(document: Document | Element, selector: string): Element[] {
     const results: Element[] = [];
     const parts = this.parseSelector(selector);
-    
+
     if (parts.length === 0) return results;
-    
+
     // For now, only handle simple selectors for multiple elements
     const firstPart = parts[0];
     this.findDescendants(document, firstPart.selector, results);
-    
+
     return results;
   }
 
@@ -232,12 +232,12 @@ export class CharacterParser {
     // Handle pseudo-selectors
     const pseudoMatch = selector.match(/^([^:]+)(:nth-child\((\d+)\))?$/);
     if (!pseudoMatch) return false;
-    
+
     const [, baseSelector, , nthChild] = pseudoMatch;
-    
+
     // First check the base selector
     let matches = false;
-    
+
     if (baseSelector.startsWith('.')) {
       // Class selector
       const className = baseSelector.substring(1);
@@ -266,7 +266,7 @@ export class CharacterParser {
       // Tag selector
       matches = element.name === baseSelector;
     }
-    
+
     // Handle nth-child if present
     if (matches && nthChild) {
       const index = parseInt(nthChild);
@@ -277,7 +277,7 @@ export class CharacterParser {
         matches = elementIndex === index;
       }
     }
-    
+
     return matches;
   }
 
@@ -287,7 +287,7 @@ export class CharacterParser {
 
   private getTextContent(element: Element): string {
     let text = '';
-    
+
     if (element.children) {
       for (const child of element.children) {
         if (child.type === 'text') {
@@ -297,7 +297,7 @@ export class CharacterParser {
         }
       }
     }
-    
+
     return text.trim();
   }
 
@@ -306,7 +306,7 @@ export class CharacterParser {
       // Handle named groups in regex
       const namedGroupRegex = regex.replace(/\?P<(\w+)>/g, '?<$1>');
       const match = new RegExp(namedGroupRegex).exec(value);
-      
+
       if (match) {
         // If there are named groups, return them as an object
         if (match.groups && Object.keys(match.groups).length > 0) {
