@@ -5,8 +5,11 @@ import { FreeCompanyParser } from './parsers/freecompany-parser';
 import { FreeCompanyMembersParser } from './parsers/freecompany-members-parser';
 import { MinionParser } from './parsers/minion-parser';
 import { MountParser } from './parsers/mount-parser';
+import { CharacterSearchParser, type CharacterSearchData } from './parsers/search-parser';
 import {
+  BadRequestError,
   MOBILE_USER_AGENT,
+  UpstreamError,
   cacheKey,
   errorStatus,
   fetchUpstreamText,
@@ -54,6 +57,7 @@ export default {
     const freecompanyMembersMatch = url.pathname.match(/^\/freecompany\/(\d+)\/members$/);
     const minionsMatch = url.pathname.match(/^\/character\/(\d+)\/minions$/);
     const mountsMatch = url.pathname.match(/^\/character\/(\d+)\/mounts$/);
+    const characterSearchMatch = url.pathname.match(/^\/search\/character$/);
 
     if (characterMatch) {
       return handleCharacterRequest(characterMatch[1], request, env);
@@ -69,6 +73,8 @@ export default {
       return handleMinionsRequest(minionsMatch[1], request, env);
     } else if (mountsMatch) {
       return handleMountsRequest(mountsMatch[1], request, env);
+    } else if (characterSearchMatch) {
+      return handleCharacterSearchRequest(request);
     } else {
       return new Response('Not Found', { status: 404 });
     }
@@ -416,4 +422,87 @@ async function fetchMountsData(characterId: string, dc: 'na' | 'jp'): Promise<an
     CharacterID: parseInt(characterId),
     ...mountsData
   };
+}
+
+// Lodestone lists at most 1000 matches, 50 to a page.
+const SEARCH_MAX_PAGE = 20;
+const SEARCH_MAX_NAME_LENGTH = 40;
+// The only parameters a search takes. Any other one is a 400: a filter under another name (Lodestone's
+// own `worldname` instead of `world`, or a typo) would otherwise search every world without a word.
+const SEARCH_PARAMETERS = new Set(['name', 'world', 'page', 'dc']);
+
+// A search is kept nowhere. Not in KV: its free plan allows 1,000 writes a day, and searches are more
+// frequent than looking up a character. Not in the Cache API either, which would do but is not needed.
+// FetchedAt is the time of this fetch.
+async function handleCharacterSearchRequest(request: Request): Promise<Response> {
+  try {
+    const url = new URL(request.url);
+    const dc = parseDc(url);
+    const { name, world, page } = parseSearchQuery(url);
+    const data = await fetchCharacterSearchData(name, world, page, dc);
+    return createResponse(JSON.stringify(withFetchedAt(data, Date.now())), request);
+  } catch (error) {
+    return errorResponse(error, request);
+  }
+}
+
+// The `name`, `world` and `page` of a search, or a BadRequestError, also for a parameter a search does not
+// take. `dc` is read apart, like everywhere else.
+function parseSearchQuery(url: URL): { name: string; world: string; page: number } {
+  for (const key of url.searchParams.keys()) {
+    if (!SEARCH_PARAMETERS.has(key)) {
+      throw new BadRequestError('Unknown parameter. A search takes name, world, page and dc');
+    }
+  }
+
+  // A name is counted in characters, not in UTF-16 units: an emoji or a rare kanji is one character.
+  const name = (url.searchParams.get('name') ?? '').trim();
+  const length = [...name].length;
+  if (length < 1 || length > SEARCH_MAX_NAME_LENGTH) {
+    throw new BadRequestError(`Invalid name. Use 1 to ${SEARCH_MAX_NAME_LENGTH} characters`);
+  }
+
+  // The values of Lodestone's own `worldname`: nothing for all worlds, `_dc_` and a data center, or a world.
+  const world = url.searchParams.get('world') ?? '';
+  if (world !== '' && !/^(?:_dc_)?[A-Za-z]+$/.test(world)) {
+    throw new BadRequestError('Invalid world. Use a world, a data center written as _dc_<name>, or nothing');
+  }
+
+  const page = parsePage(url);
+  if (page > SEARCH_MAX_PAGE) {
+    throw new BadRequestError(`Invalid page. Use a whole number from 1 to ${SEARCH_MAX_PAGE}`);
+  }
+
+  return { name, world, page };
+}
+
+async function fetchCharacterSearchData(
+  name: string,
+  world: string,
+  page: number,
+  dc: 'na' | 'jp'
+): Promise<CharacterSearchData> {
+  // URLSearchParams escapes the name, whatever it holds, so Lodestone reads the name as it was typed.
+  const url = new URL(`https://${dc}.finalfantasyxiv.com/lodestone/character/`);
+  url.searchParams.set('q', name);
+  url.searchParams.set('worldname', world);
+  url.searchParams.set('page', String(page));
+
+  let html: string;
+  try {
+    html = await fetchUpstreamText(url.href);
+  } catch (error) {
+    // Lodestone answers a search with a 200 page even when nobody matches, and the page says so. A 404 or
+    // a 403 for the search URL is therefore Lodestone failing, not the "no such character" or "private" of
+    // the other endpoints: it is a 502 `upstream` like any other failure, logged like one with the status
+    // Lodestone really sent.
+    if (error instanceof UpstreamError && (error.status === 404 || error.status === 403)) {
+      throw new UpstreamError(502, `Lodestone answered the search with HTTP ${error.status}, not with a page of results`);
+    }
+    throw error;
+  }
+
+  // 解析 HTML 並提取搜尋結果
+  const parser = new CharacterSearchParser();
+  return parser.parse(html);
 }

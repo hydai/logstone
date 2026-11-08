@@ -10,6 +10,8 @@ const classjobNa = readFileSync(new URL('./fixtures/classjob-na.html', import.me
 const mountNa = readFileSync(new URL('./fixtures/mount-mobile-na.html', import.meta.url), 'utf8');
 const mountJp = readFileSync(new URL('./fixtures/mount-mobile-jp.html', import.meta.url), 'utf8');
 const minionNa = readFileSync(new URL('./fixtures/minion-mobile-na.html', import.meta.url), 'utf8');
+const searchNa = readFileSync(new URL('./fixtures/search-na.html', import.meta.url), 'utf8');
+const searchNone = readFileSync(new URL('./fixtures/search-none-na.html', import.meta.url), 'utf8');
 
 const HOUR = 60 * 60 * 1000;
 
@@ -616,4 +618,274 @@ describe('the mount and minion pages', () => {
       expect([...kv.keys()]).toEqual([key]);
     });
   }
+});
+
+// Searching for a character is unlike the other endpoints: it takes a name instead of an ID, and its
+// answer is never kept, in KV or anywhere else (searches are too frequent for the writes the free
+// plan of KV allows). It reads the desktop layout of the search page.
+describe('GET /search/character', () => {
+  const search = (query: string) => workerRequest(`/search/character?${query}`);
+
+  // The Lodestone URL the Worker asks for a search, which Lodestone answers with the page of nobody found.
+  const lodestoneUrlFor = async (query: string): Promise<URL> => {
+    const { env } = createEnv();
+    const calls = stubFetch(() => htmlPage(searchNone));
+
+    const response = await worker.fetch(search(query), env);
+
+    expect(response.status).toBe(200);
+    expect(calls).toHaveLength(1);
+    return new URL(calls[0].url);
+  };
+
+  describe('a request that is wrong never reaches Lodestone or KV', () => {
+    const WRONG = [
+      ['no name', 'world=Tiamat'],
+      ['an empty name', 'name='],
+      ['a blank name', 'name=%20%20%20'],
+      ['a name of 41 characters', `name=${'a'.repeat(41)}`],
+      ['41 characters that take two UTF-16 units each', `name=${encodeURIComponent('😀'.repeat(41))}`],
+      ['page 0', 'name=Aoi&page=0'],
+      ['page 21', 'name=Aoi&page=21'],
+      ['page abc', 'name=Aoi&page=abc'],
+      ['page 1.5', 'name=Aoi&page=1.5'],
+      ['an empty page', 'name=Aoi&page='],
+      ['a world with a space', 'name=Aoi&world=Tia%20mat'],
+      ['a world with a digit', 'name=Aoi&world=Tiamat2'],
+      ['a world with a hyphen', 'name=Aoi&world=Tia-mat'],
+      ['a data center prefix and no data center after it', 'name=Aoi&world=_dc_'],
+      ['a world that carries another parameter', 'name=Aoi&world=Tiamat%26page%3D9'],
+      ['a world in Japanese', `name=Aoi&world=${encodeURIComponent('ティアマット')}`],
+      ['an unknown data center', 'name=Aoi&dc=xx'],
+      // A filter under another name must not quietly become a search of every world.
+      ["Lodestone's own worldname instead of world", 'name=Aoi&worldname=Tiamat'],
+      ['a misspelled world', 'name=Aoi&wrold=Tiamat'],
+      ['a parameter the search does not take', 'name=Aoi&world=Tiamat&foo=1'],
+    ];
+
+    for (const [what, query] of WRONG) {
+      test(`${what} is a 400 bad_request`, async () => {
+        const { env, kv } = createEnv();
+        const calls = stubFetch(() => htmlPage(searchNa));
+
+        const response = await worker.fetch(search(query), env);
+
+        expect(response.status).toBe(400);
+        // The website reads the error from another origin.
+        expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://ff14.tw');
+        expect(await response.json()).toEqual({ error: 'bad_request' });
+        expect(calls).toHaveLength(0);
+        expect(kv.size).toBe(0);
+      });
+    }
+  });
+
+  describe('what it asks of Lodestone', () => {
+    test('is the search page of the data center, with the name, the world and the page', async () => {
+      const url = await lodestoneUrlFor("name=Y'shtola%20Rhul&world=_dc_Elemental&dc=jp&page=2");
+
+      expect(url.protocol).toBe('https:');
+      expect(url.hostname).toBe('jp.finalfantasyxiv.com');
+      expect(url.pathname).toBe('/lodestone/character/');
+      expect(url.searchParams.get('q')).toBe("Y'shtola Rhul");
+      expect(url.searchParams.get('worldname')).toBe('_dc_Elemental');
+      expect(url.searchParams.get('page')).toBe('2');
+    });
+
+    test.each(['', 'world='])('is the na site, all worlds and the first page when the query is only a name and %j', async (extra) => {
+      const url = await lodestoneUrlFor(`name=Aoi&${extra}`);
+
+      expect(url.hostname).toBe('na.finalfantasyxiv.com');
+      expect(url.searchParams.get('q')).toBe('Aoi');
+      // All worlds is a worldname that is there and empty, as the search form of Lodestone sends it.
+      expect(url.searchParams.has('worldname')).toBe(true);
+      expect(url.searchParams.get('worldname')).toBe('');
+      expect(url.searchParams.get('page')).toBe('1');
+    });
+
+    test.each(['_dc_Elemental', 'Tiamat'])('takes %s as a world to search in', async (world) => {
+      expect((await lodestoneUrlFor(`name=Aoi&world=${world}`)).searchParams.get('worldname')).toBe(world);
+    });
+
+    test('goes as far as page 20, the last page Lodestone shows', async () => {
+      expect((await lodestoneUrlFor('name=Aoi&page=20')).searchParams.get('page')).toBe('20');
+    });
+
+    // A name goes to Lodestone as it was typed, whatever it holds, so q decodes to what the player wrote.
+    test.each(["Y'shtola Rhul", "A'lu-ne Moku", 'ティアマット', 'Aoi & Aoi=1', '100% Real', 'a+b'])(
+      'sends the name %s exactly as it was typed',
+      async (name) => {
+        expect((await lodestoneUrlFor(`name=${encodeURIComponent(name)}`)).searchParams.get('q')).toBe(name);
+      },
+    );
+
+    test('leaves out the spaces around a name', async () => {
+      const url = await lodestoneUrlFor(`name=${encodeURIComponent('  Aoi Mizuno \t')}`);
+
+      expect(url.searchParams.get('q')).toBe('Aoi Mizuno');
+    });
+
+    test('accepts a name of 40 characters, however many UTF-16 units they take', async () => {
+      for (const name of ['a'.repeat(40), '😀'.repeat(40)]) {
+        expect((await lodestoneUrlFor(`name=${encodeURIComponent(name)}`)).searchParams.get('q')).toBe(name);
+      }
+    });
+
+    test('is the desktop layout: there is no mobile User-Agent', async () => {
+      const { env } = createEnv();
+      const calls = stubFetch(() => htmlPage(searchNone));
+
+      await worker.fetch(search('name=Aoi'), env);
+
+      expect(userAgentOf(calls[0])).not.toBe(MOBILE_USER_AGENT);
+    });
+  });
+
+  describe('the answer', () => {
+    test('has the results, the pagination and the time of the fetch', async () => {
+      vi.setSystemTime(Date.UTC(2026, 10, 8, 2, 30));
+      const { env } = createEnv();
+      stubFetch(() => htmlPage(searchNa));
+
+      const response = await worker.fetch(search('name=Aoi'), env);
+      const body = (await response.json()) as {
+        Results: Array<{ Name: string; FreeCompany: { ID: string; Name: string } | null }>;
+        Pagination: object;
+        FetchedAt: string;
+      };
+
+      expect(response.status).toBe(200);
+      expect(Object.keys(body).sort()).toEqual(['FetchedAt', 'Pagination', 'Results']);
+      expect(body.Results.map(({ Name }) => Name)).toEqual(['Aoi Mizuno', 'Kaede Aizawa', "A'lu-ne Moku"]);
+      expect(body.Results.map(({ FreeCompany }) => FreeCompany)).toEqual([
+        { ID: '9230000000000000001', Name: 'Moonlit Garden' },
+        null,
+        null,
+      ]);
+      expect(body.Pagination).toEqual({ Page: 1, PageTotal: 20, Total: 1000 });
+      expect(body.FetchedAt).toBe('2026-11-08T02:30:00.000Z');
+    });
+
+    test('is an empty list, not an error, when nobody matches', async () => {
+      vi.setSystemTime(Date.UTC(2026, 10, 8, 2, 30));
+      const { env } = createEnv();
+      stubFetch(() => htmlPage(searchNone));
+
+      const response = await worker.fetch(search('name=Nobody%20Atall'), env);
+
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({
+        Results: [],
+        Pagination: { Page: 1, PageTotal: 0, Total: 0 },
+        FetchedAt: '2026-11-08T02:30:00.000Z',
+      });
+    });
+
+    test('is JSON with the CORS header the website needs, and has no cache status since nothing is cached', async () => {
+      const { env } = createEnv();
+      stubFetch(() => htmlPage(searchNa));
+
+      const response = await worker.fetch(search('name=Aoi'), env);
+
+      expect(response.headers.get('Content-Type')).toContain('application/json');
+      expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://ff14.tw');
+      expect(response.headers.get('X-Cache-Status')).toBeNull();
+    });
+
+    test('is never kept in KV, which is not even read', async () => {
+      const { env, kv } = createEnv();
+      const read = vi.spyOn(env.LOGSTONE, 'get');
+      const write = vi.spyOn(env.LOGSTONE, 'put');
+      stubFetch(() => htmlPage(searchNa));
+
+      const response = await worker.fetch(search('name=Aoi'), env);
+
+      // The search did run, so there was something to keep.
+      expect(response.status).toBe(200);
+      expect(kv.size).toBe(0);
+      expect(read).not.toHaveBeenCalled();
+      expect(write).not.toHaveBeenCalled();
+    });
+
+    test('is not kept anywhere else either: the same search asks Lodestone again', async () => {
+      const { env } = createEnv();
+      let asked = 0;
+      stubFetch(() => htmlPage(asked++ === 0 ? searchNa : searchNone));
+
+      const first = (await (await worker.fetch(search('name=Aoi'), env)).json()) as { Results: unknown[] };
+      const second = (await (await worker.fetch(search('name=Aoi'), env)).json()) as { Results: unknown[] };
+
+      expect(asked).toBe(2);
+      expect(first.Results).toHaveLength(3);
+      expect(second.Results).toHaveLength(0);
+    });
+  });
+
+  // Every failure is read by the website from another origin, so each one carries the CORS header.
+  describe('when it goes wrong at Lodestone', () => {
+    test('a 200 page that is not a search page is a 502 upstream, and keeps nothing', async () => {
+      const { env, kv } = createEnv();
+      stubFetch(() => htmlPage('<html><body><p>Service unavailable</p></body></html>'));
+
+      const response = await worker.fetch(search('name=Aoi'), env);
+
+      expect(response.status).toBe(502);
+      expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://ff14.tw');
+      expect(await response.json()).toEqual({ error: 'upstream' });
+      expect(kv.size).toBe(0);
+    });
+
+    // Lodestone answers a search with a 200 page even when nobody matches, and the page says so. So a 404 or
+    // a 403 for the search URL is Lodestone failing, not the "no such character" or "private" of the other
+    // endpoints: it is a 502 like any other failure, and it is logged like one, with the status Lodestone sent.
+    test.each([404, 403])(
+      'when Lodestone answers the search with %i, the Worker answers 502 upstream, logs it and keeps nothing',
+      async (status) => {
+        const { env, kv } = createEnv();
+        stubFetch(lodestoneStatus(status));
+
+        const response = await worker.fetch(search('name=Aoi'), env);
+
+        expect(response.status).toBe(502);
+        expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://ff14.tw');
+        expect(await response.json()).toEqual({ error: 'upstream' });
+        expect(kv.size).toBe(0);
+        expect(console.error).toHaveBeenCalledWith(
+          'Error:',
+          expect.objectContaining({ name: 'UpstreamError', status: 502, message: expect.stringContaining(String(status)) }),
+        );
+      },
+    );
+
+    // A page that has the window but neither a row the parser can read, nor the notice that nobody matches,
+    // nor a total of 0, is a page Lodestone has changed: it is not a search that found nobody.
+    test.each([
+      ['only the window', '<html><body><div class="ldst__window"></div></body></html>'],
+      ['a total but no row it can read', searchNa.replaceAll('entry__link', 'entry__anchor')],
+    ])('a page with %s is a 502 upstream, not an empty list, and keeps nothing', async (_what, page) => {
+      const { env, kv } = createEnv();
+      stubFetch(() => htmlPage(page));
+
+      const response = await worker.fetch(search('name=Aoi'), env);
+
+      expect(response.status).toBe(502);
+      expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://ff14.tw');
+      expect(await response.json()).toEqual({ error: 'upstream' });
+      expect(kv.size).toBe(0);
+    });
+
+    for (const failure of FAILURES.filter(({ status }) => status === 502)) {
+      test(`when Lodestone ${failure.what}, the Worker answers 502 upstream`, async () => {
+        const { env, kv } = createEnv();
+        stubFetch(failure.respond);
+
+        const response = await worker.fetch(search('name=Aoi'), env);
+
+        expect(response.status).toBe(502);
+        expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://ff14.tw');
+        expect(await response.json()).toEqual({ error: 'upstream' });
+        expect(kv.size).toBe(0);
+      });
+    }
+  });
 });

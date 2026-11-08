@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<!--
+  Minimal stand-in for the Lodestone character search page (English), a search with many matches.
+  Real page: https://na.finalfantasyxiv.com/lodestone/character/?q=<name>&worldname=<world>&page=<page>
+
+  Only the elements reached by the selectors in src/lib/lodestone-css-selectors/search/character.json
+  are kept, in the same nesting and order as the real page (nth-child positions matter): the total,
+  the pager (the page has it twice, above and below the list) and three rows. As on the real page,
+  the outer form is never closed, so the pagers and the rows sit inside it.
+  The total says 1000, the most Lodestone counts: it shows no more than 1000 matches, 50 to a page.
+  Everything about the players is made up: the names, the character IDs, the avatars, the free
+  company with its ID and its crest, and the search text echoed in the pager links. The job icons,
+  the rank and the world names are game data. The first row has a free company, the others have
+  none. The name of the third row has an apostrophe and a hyphen, which the page writes as an entity.
+-->
+<html lang="en">
+<body>
+<div class="ldst__window">
+  <form method="get" action="?">
+    <form method="get" action="?" class="right">
+      <div class="select-pulldown__count">
+        <div class="parts__total">1000 Total</div>
+      </div>
+    </form>
+    <ul class="btn__pager">
+      <li><a href="javascript:void(0);" class="icon-list__pager btn__pager__prev--all btn__pager__no"></a></li>
+      <li><a href="javascript:void(0);" class="icon-list__pager btn__pager__prev btn__pager__no"></a></li>
+      <li class="btn__pager__current">Page 1 of 20</li>
+      <li><a href="https://na.finalfantasyxiv.com/lodestone/character/?page=2&amp;q=Aoi&amp;worldname=" class="icon-list__pager btn__pager__next js__tooltip" data-tooltip="Next"></a></li>
+      <li><a href="https://na.finalfantasyxiv.com/lodestone/character/?page=20&amp;q=Aoi&amp;worldname=" class="icon-list__pager btn__pager__next--all js__tooltip" data-tooltip="Last"></a></li>
+    </ul>
+    <div class="entry">
+      <a href="/lodestone/character/12345678/" class="entry__link">
+        <div class="entry__chara__face"><img src="https://img2.finalfantasyxiv.com/f/00000000000000000000000000000001_00000000000000000000000000000001fc0.jpg?1700000001" alt="Aoi Mizuno"></div>
+        <div class="entry__box entry__box--world">
+          <p class="entry__name">Aoi Mizuno</p>
+          <p class="entry__world"><i class="xiv-lds xiv-lds-home-world js__tooltip" data-tooltip="Home World"></i>Tiamat [Gaia]</p>
+          <ul class="entry__chara_info">
+            <li><i class="list__ic__class"><img src="https://lds-img.finalfantasyxiv.com/h/F/KWI-9P3RX_Ojjn_mwCS2N0-3TI.png" width="20" height="20" alt=""></i><span>100</span></li>
+            <li class="js__tooltip" data-tooltip="Maelstrom / Storm Private Second Class"><img src="https://lds-img.finalfantasyxiv.com/h/S/fOkpPsyxEDvRCtWnNBMaSxeqLw.png" width="20" height="20" alt=""></li>
+          </ul>
+        </div>
+        <div class="entry__chara__lang">JA/EN</div>
+      </a>
+      <a href="/lodestone/freecompany/9230000000000000001/" class="entry__freecompany__link"><i class="list__ic__crest"><img src="https://img2.finalfantasyxiv.com/c/B00_00000000000000000000000000000000_00_40x40.png" width="18" height="18"><img src="https://img2.finalfantasyxiv.com/c/F00_00000000000000000000000000000000_00_40x40.png" width="18" height="18"><img src="https://img2.finalfantasyxiv.com/c/S00_00000000000000000000000000000000_00_40x40.png" width="18" height="18"></i><span>Moonlit Garden</span></a>
+    </div>
+    <div class="entry">
+      <a href="/lodestone/character/23456789/" class="entry__link">
+        <div class="entry__chara__face"><img src="https://img2.finalfantasyxiv.com/f/00000000000000000000000000000002_00000000000000000000000000000002fc0.jpg?1700000002" alt="Kaede Aizawa"></div>
+        <div class="entry__box entry__box--world">
+          <p class="entry__name">Kaede Aizawa</p>
+          <p class="entry__world"><i class="xiv-lds xiv-lds-home-world js__tooltip" data-tooltip="Home World"></i>Cactuar [Aether]</p>
+          <ul class="entry__chara_info">
+            <li><i class="list__ic__class"><img src="https://lds-img.finalfantasyxiv.com/h/V/iW7IBKQ7oglB9jmbn6LwdZXkWw.png" width="20" height="20" alt=""></i><span>1</span></li>
+          </ul>
+        </div>
+        <div class="entry__chara__lang">EN</div>
+      </a>
+    </div>
+    <div class="entry">
+      <a href="/lodestone/character/34567890/" class="entry__link">
+        <div class="entry__chara__face"><img src="https://img2.finalfantasyxiv.com/f/00000000000000000000000000000003_00000000000000000000000000000003fc0.jpg?1700000003" alt="A&#39;lu-ne Moku"></div>
+        <div class="entry__box entry__box--world">
+          <p class="entry__name">A&#39;lu-ne Moku</p>
+          <p class="entry__world"><i class="xiv-lds xiv-lds-home-world js__tooltip" data-tooltip="Home World"></i>Zodiark [Light]</p>
+          <ul class="entry__chara_info">
+            <li><i class="list__ic__class"><img src="https://lds-img.finalfantasyxiv.com/h/4/IM3PoP6p06GqEyReygdhZNh7fU.png" width="20" height="20" alt=""></i><span>3</span></li>
+          </ul>
+        </div>
+        <div class="entry__chara__lang">EN</div>
+      </a>
+    </div>
+    <ul class="btn__pager">
+      <li><a href="javascript:void(0);" class="icon-list__pager btn__pager__prev--all btn__pager__no"></a></li>
+      <li><a href="javascript:void(0);" class="icon-list__pager btn__pager__prev btn__pager__no"></a></li>
+      <li class="btn__pager__current">Page 1 of 20</li>
+      <li><a href="https://na.finalfantasyxiv.com/lodestone/character/?page=2&amp;q=Aoi&amp;worldname=" class="icon-list__pager btn__pager__next js__tooltip" data-tooltip="Next"></a></li>
+      <li><a href="https://na.finalfantasyxiv.com/lodestone/character/?page=20&amp;q=Aoi&amp;worldname=" class="icon-list__pager btn__pager__next--all js__tooltip" data-tooltip="Last"></a></li>
+    </ul>
+  </form>
+</div>
+</body>
+</html>
