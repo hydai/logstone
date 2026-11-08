@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, test, vi } from 'vitest';
+import { ParseError } from '../src/lib/http';
 import * as classjobSelectors from '../src/lib/lodestone-css-selectors/profile/classjob.json';
 import { ClassJobParser } from '../src/parsers/classjob-parser';
 
@@ -84,6 +85,22 @@ describe('ClassJobParser on the Class/Job page', () => {
 
   test('has no Bozja or Eureka entry for a page without those blocks', () => {
     expect(data.SpecialContent).toEqual({});
+  });
+});
+
+// The Class/Job page lists every job, the locked ones too. A page without a single row the parser can
+// read is a layout it does not know, or another page: an answer without jobs would be kept for a day.
+describe('a page without a class or job row', () => {
+  test.each([
+    ['an empty page', '<html><body></body></html>'],
+    ['only the window of a Lodestone page', '<html><body><div class="ldst__window"></div></body></html>'],
+    [
+      'the Class/Job page with its rows no longer list items',
+      fixture('classjob-na.html').replaceAll('<li>', '<div>').replaceAll('</li>', '</div>'),
+    ],
+  ])('is a ParseError: %s', (_what, html) => {
+    expect(() => new ClassJobParser().parse(html)).toThrow(ParseError);
+    expect(() => new ClassJobParser().parse(html)).toThrow(/class or job row/);
   });
 });
 

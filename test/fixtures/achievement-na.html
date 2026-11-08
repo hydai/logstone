@@ -6,16 +6,30 @@
   Only the elements reached by the selectors in
   src/lib/lodestone-css-selectors/profile/achievements.json are kept, in the same nesting and
   order as the real page (nth-child positions matter): the points, the total, the pager, and
-  the entries.
+  the entries. So is the frame with the character's name, as on every character page: a page
+  without the name is not one the parser knows.
   The page writes each date with a script: the span shows a dash until
   ldst_strftime(<unix seconds>, 'YMD') fills it in, so the time is only in the script.
   The achievements are real ones (their names and IDs are game data); the dates are made up,
-  and so are the character ID in the links, the total, the points and the number of pages.
-  The last entry has no script, for a date the page does not give.
+  and so are the character (the same as in profile-na.html), the total, the points and the
+  number of pages. The last entry has no script, for a date the page does not give.
 -->
 <html lang="en">
 <body>
 <div id="character" class="ldst__window">
+  <div class="frame__chara js__toggle_wrapper">
+    <a href="/lodestone/character/12345678/" class="frame__chara__link state_btn">
+      <div class="frame__chara__face">
+        <img src="https://img2.finalfantasyxiv.com/f/00000000000000000000000000000000_00000000000000000000000000000000fc0.jpg?1700000000" width="40" height="40" alt="">
+      </div>
+      <div class="frame__chara__box">
+        <p class="frame__chara__title">Moonwalker</p>
+        <p class="frame__chara__name">Hikari Senshi</p>
+        <p class="frame__chara__world"><i class="xiv-lds xiv-lds-home-world js__tooltip" data-tooltip="Home World"></i>Tonberry [Elemental]</p>
+      </div>
+    </a>
+  </div>
+
   <div class="character__content selected" id="anchor_achievement">
     <div class="clearfix parts__space--add">
       <div class="ldst__category">

@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, test } from 'vitest';
+import { ParseError } from '../src/lib/http';
 import { JOB_ICON_KEYS, activeJobKey } from '../src/lib/job-icons';
 import { CharacterParser } from '../src/parsers/character-parser';
 import { ClassJobParser } from '../src/parsers/classjob-parser';
@@ -13,6 +14,11 @@ const profileWith = (...swaps: Array<[from: string, to: string]>) =>
     if (!html.includes(from)) throw new Error(`profile-na.html has no ${from}`);
     return html.replace(from, to);
   }, fixture('profile-na.html'));
+
+// The name of the character, where every character page shows it, and nothing else.
+const ONLY_THE_NAME =
+  '<html><body><div class="frame__chara"><a class="frame__chara__link"><div class="frame__chara__face"></div>' +
+  '<div class="frame__chara__box"><p class="frame__chara__name">Hikari Senshi</p></div></a></div></body></html>';
 
 const BIO = '<div class="character__selfintroduction">第一行<br>第二行</div>';
 const withBio = (markup: string) =>
@@ -50,11 +56,29 @@ describe('CharacterParser on the profile page', () => {
     expect(c.FreeCompany.Name).toBe('Example & Company <3');
   });
 
-  test('a page that shows nothing of the character has no company and no active job', () => {
-    const c = new CharacterParser().parse('<html><body></body></html>');
+  test('a page that shows nothing of the character but the name has no company and no active job', () => {
+    const c = new CharacterParser().parse(ONLY_THE_NAME);
+    expect(c.Name).toBe('Hikari Senshi');
     expect(c.FreeCompany).toBeNull();
     expect(c.ActiveClassJob).toEqual({ Key: null, Level: null, Icon: null });
     expect(c.Bio).toBeUndefined();
+  });
+});
+
+// Every character page shows the name, the private ones too. A page without one is a layout the parser
+// does not know, or another page altogether: a character without a name would be kept for a day.
+describe('a page without the character name', () => {
+  const NAME = '<p class="frame__chara__name">Hikari Senshi</p>';
+
+  test.each([
+    ['an empty page', '<html><body></body></html>'],
+    ['only the window of a Lodestone page', '<html><body><div class="ldst__window"></div></body></html>'],
+    ['the profile without the name', profileWith([NAME, ''])],
+    ['the profile with an empty name', profileWith([NAME, '<p class="frame__chara__name"> </p>'])],
+    ['the profile with the name element renamed', profileWith([NAME, '<p class="frame__chara__title">Hikari Senshi</p>'])],
+  ])('is a ParseError: %s', (_what, html) => {
+    expect(() => new CharacterParser().parse(html)).toThrow(ParseError);
+    expect(() => new CharacterParser().parse(html)).toThrow(/character name/);
   });
 });
 

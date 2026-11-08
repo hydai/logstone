@@ -1,5 +1,6 @@
 import { parseDocument } from 'htmlparser2';
 import { Element, Document } from 'domhandler';
+import { ParseError } from '../lib/http';
 import * as freecompanySelectors from '../lib/lodestone-css-selectors/freecompany/freecompany.json';
 import * as focusSelectors from '../lib/lodestone-css-selectors/freecompany/focus.json';
 import * as reputationSelectors from '../lib/lodestone-css-selectors/freecompany/reputation.json';
@@ -77,6 +78,12 @@ export class FreeCompanyParser {
 
     // 處理特殊欄位
     const processed = this.processSpecialFields(result);
+
+    // Every free company page shows the company's name. A page without it is a layout the selectors
+    // do not know, or another page: answering it would keep a nameless company for a day.
+    if (!processed.Name) {
+      throw new ParseError('The page has no company name, so it is not a free company page the parser knows');
+    }
 
     // 解析 Focus
     const focus = this.extractFocus(document);

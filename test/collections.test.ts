@@ -127,9 +127,22 @@ for (const { kind, read, pages, icons, placeholder } of COLLECTIONS) {
     });
 
     test('reads a list with no rows as nothing, with a total of 0', () => {
-      const empty = `<p class="minion__sort__total com">Total: <span>0</span></p><ul class="${kind}__list"></ul>`;
+      const empty =
+        `<div class="ldst_main_content"><p class="minion__sort__total com">Total: <span>0</span></p>` +
+        `<ul class="${kind}__list"></ul></div>`;
 
       expect(read(empty)).toEqual({ entries: [], total: 0 });
+    });
+
+    // Even an empty collection is drawn inside the mobile layout. A page without it is blank, someone
+    // else's (a challenge or an error page), or the desktop page Lodestone sends when it ignores the
+    // User-Agent: answering it would keep an empty collection in KV for two days.
+    test.each([
+      ['a blank page', '<html><body></body></html>'],
+      ['the desktop layout', `<html><body><div class="ldst__window"><ul class="${kind}__list"></ul></div></body></html>`],
+      ['a page with a total of 0 outside the mobile layout', '<html><body><p class="minion__sort__total">Total: <span>0</span></p></body></html>'],
+    ])('is a ParseError, not an empty list, for %s', (_what, page) => {
+      expect(() => read(page)).toThrow(ParseError);
     });
 
     describe('when the page counts rows', () => {

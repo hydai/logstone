@@ -1,5 +1,6 @@
 import { parseDocument } from 'htmlparser2';
 import { Element, Document } from 'domhandler';
+import { ParseError } from '../lib/http';
 import { activeJobKey } from '../lib/job-icons';
 import * as characterSelectors from '../lib/lodestone-css-selectors/profile/character.json';
 import * as attributesSelectors from '../lib/lodestone-css-selectors/profile/attributes.json';
@@ -43,6 +44,12 @@ export class CharacterParser {
           console.error(`Error extracting field ${field}:`, error);
         }
       }
+    }
+
+    // Every character page shows the name, the private ones too. A page without it is a layout the
+    // selectors do not know, or another page: answering it would keep a nameless character for a day.
+    if (!result.Name) {
+      throw new ParseError('The page has no character name, so it is not a character page the parser knows');
     }
 
     // 特殊處理某些複雜的欄位

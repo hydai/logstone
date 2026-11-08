@@ -81,6 +81,7 @@ npx tsc --noEmit
   - CSS selector parsing with pseudo-selector support
   - Regex-based data extraction
   - Error handling for missing elements
+  - A 200 page without what the parser needs throws `ParseError` (502, never cached), so a Lodestone layout change is never kept as an empty answer: no character name (character, achievements), no achievement section (`.ldst__achievement`; the profile has the name too), not a single class job row, an achievement total above 0 with no row, no Free Company name, not a single member row (a company has at least its master), a mount or minion total above 0 with no row, or no row on a page without the mobile layout (`.ldst_main_content`: a blank page, someone else's page, or the desktop page Lodestone sends when it ignores the User-Agent); for the search, see Character Search. An achievement history with a total of 0 (or none) and no row inside its section is empty, not an error, and so is a collection with a total of 0 (or none) and no row inside the mobile layout
 
 - **CORS Handling**:
   - Production: Restricted to ff14.tw domains only

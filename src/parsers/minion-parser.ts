@@ -50,6 +50,13 @@ export class MinionParser {
       throw new ParseError(`The page counts ${total} minions but no row could be read`);
     }
 
+    // Even an empty collection is drawn inside the mobile layout. With no row and no such layout, the page
+    // is blank, someone else's (a challenge or an error page), or the desktop page Lodestone sends when it
+    // ignores the User-Agent: not an empty collection to keep for two days.
+    if (minions.length === 0 && !this.querySelector(document, minionSelectors.PAGE.selector)) {
+      throw new ParseError('The page has no minion row and is not the mobile Lodestone layout');
+    }
+
     return {
       Minions: minions,
       Total: total

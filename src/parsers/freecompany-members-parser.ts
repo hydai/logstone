@@ -1,5 +1,6 @@
 import { parseDocument } from 'htmlparser2';
 import { Element, Document } from 'domhandler';
+import { ParseError } from '../lib/http';
 import * as membersSelectors from '../lib/lodestone-css-selectors/freecompany/members.json';
 
 interface MemberData {
@@ -41,6 +42,12 @@ export class FreeCompanyMembersParser {
           members.push(member);
         }
       }
+    }
+
+    // A free company has at least its master. A page without a single member row the parser can read
+    // is a layout the selectors do not know, or another page: answering it would keep no members for a day.
+    if (members.length === 0) {
+      throw new ParseError('The page has no member row the parser can read');
     }
 
     // 解析分頁資訊

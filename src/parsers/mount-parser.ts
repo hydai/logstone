@@ -50,6 +50,13 @@ export class MountParser {
       throw new ParseError(`The page counts ${total} mounts but no row could be read`);
     }
 
+    // Even an empty collection is drawn inside the mobile layout. With no row and no such layout, the page
+    // is blank, someone else's (a challenge or an error page), or the desktop page Lodestone sends when it
+    // ignores the User-Agent: not an empty collection to keep for two days.
+    if (mounts.length === 0 && !this.querySelector(document, mountSelectors.PAGE.selector)) {
+      throw new ParseError('The page has no mount row and is not the mobile Lodestone layout');
+    }
+
     return {
       Mounts: mounts,
       Total: total

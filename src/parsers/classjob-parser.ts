@@ -1,5 +1,6 @@
 import { parseDocument } from 'htmlparser2';
 import { Element, Document } from 'domhandler';
+import { ParseError } from '../lib/http';
 import * as classjobSelectors from '../lib/lodestone-css-selectors/profile/classjob.json';
 
 interface SelectorDefinition {
@@ -41,7 +42,19 @@ export class ClassJobParser {
   parse(html: string): ClassJobData {
     const document = parseDocument(html);
     const rawData = this.extractAllJobs(document);
-    return this.organizeJobData(rawData);
+    const jobs = this.organizeJobData(rawData);
+
+    // The Class/Job page lists every class and job, the locked ones too. Not a single row read is a
+    // layout the selectors do not know, or another page: answering it would keep no jobs for a day.
+    const rows = [...Object.values(jobs.CombatJobs), jobs.CraftingJobs, jobs.GatheringJobs].reduce(
+      (count, group) => count + Object.keys(group).length,
+      0
+    );
+    if (rows === 0) {
+      throw new ParseError('The page has no class or job row the parser can read');
+    }
+
+    return jobs;
   }
 
   private extractAllJobs(document: Document): Record<string, JobData> {

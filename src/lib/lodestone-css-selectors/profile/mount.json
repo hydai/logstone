@@ -14,5 +14,8 @@
     },
     "TOTAL": {
         "selector": ".minion__sort__total > span:nth-child(1)"
+    },
+    "PAGE": {
+        "selector": ".ldst_main_content"
     }
 }

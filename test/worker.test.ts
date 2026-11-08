@@ -112,6 +112,23 @@ const FAILURES = [
     status: 502,
     error: 'upstream',
   },
+  {
+    // A blank page, or a page that is not Lodestone's (a challenge or an error page sent with 200).
+    // Answering it would keep a nameless character or an empty list in KV.
+    what: 'answers 200 with a blank page',
+    respond: () => htmlPage('<html><body></body></html>'),
+    status: 502,
+    error: 'upstream',
+  },
+  {
+    // A layout no parser knows: the window every desktop Lodestone page has, and nothing else a selector
+    // finds but a count of rows. Answering it would keep an empty answer in KV.
+    what: 'answers 200 with a page the parser does not know',
+    respond: () =>
+      htmlPage('<html><body><div class="ldst__window"><p class="minion__sort__total">Total: <span>3</span></p></div></body></html>'),
+    status: 502,
+    error: 'upstream',
+  },
 ];
 
 describe('failures', () => {
@@ -219,6 +236,19 @@ describe('failures', () => {
       expect(console.warn).not.toHaveBeenCalled();
       expect(console.error).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('an achievement history that Lodestone answers with another character page', () => {
+  test('the character profile is a 502 upstream, not an empty history kept for two days', async () => {
+    const { env, kv } = createEnv();
+    stubFetch(() => htmlPage(profileNa));
+
+    const response = await worker.fetch(workerRequest('/character/1/achievements'), env);
+
+    expect(response.status).toBe(502);
+    expect(await response.json()).toEqual({ error: 'upstream' });
+    expect(kv.size).toBe(0);
   });
 });
 
@@ -392,8 +422,13 @@ describe('cache keys and lifetimes', () => {
   // KV drops an entry once it is no longer served, so nothing is left in it for good.
   test.each([
     { path: '/character/1', page: profileNa, key: 'v2:character:na:1', expirationTtl: 86400 },
-    // An empty minion list, kept twice as long as the rest.
-    { path: '/character/1/minions', page: '<html><body></body></html>', key: 'v2:minions:na:1', expirationTtl: 172800 },
+    // An empty minion list (inside the mobile layout, as Lodestone draws one), kept twice as long as the rest.
+    {
+      path: '/character/1/minions',
+      page: '<html><body><div class="ldst_main_content"><p class="minion__sort__total">Total: <span>0</span></p></div></body></html>',
+      key: 'v2:minions:na:1',
+      expirationTtl: 172800,
+    },
   ])('$path is saved in $key to expire after $expirationTtl seconds, the time it is served', async ({ path, page, key, expirationTtl }) => {
     const { env } = createEnv();
     const put = vi.spyOn(env.LOGSTONE, 'put');
@@ -420,7 +455,11 @@ describe('cache keys and lifetimes', () => {
 
 // The class job and achievement pages were read from the English site whatever `dc` said.
 // Each is asked of the Lodestone site of its own data center and saved under the key of that data center.
-const NO_ACHIEVEMENTS = '<html><body></body></html>';
+// The history of a character with no achievement yet, which is still an answer: the name and a total of 0.
+const NO_ACHIEVEMENTS =
+  '<html><body><div class="ldst__window"><div class="frame__chara"><a class="frame__chara__link">' +
+  '<div class="frame__chara__face"></div><div class="frame__chara__box"><p class="frame__chara__name">Hikari Senshi</p></div>' +
+  '</a></div><div class="ldst__achievement"><div class="parts__total">0 Total</div></div></div></body></html>';
 const DC_PAGES = [
   {
     path: '/character/1/classjob',

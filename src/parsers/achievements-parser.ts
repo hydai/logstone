@@ -1,6 +1,8 @@
 import { parseDocument } from 'htmlparser2';
 import { Element, Document, isTag } from 'domhandler';
+import { ParseError } from '../lib/http';
 import * as achievementsSelectors from '../lib/lodestone-css-selectors/profile/achievements.json';
+import * as characterSelectors from '../lib/lodestone-css-selectors/profile/character.json';
 
 interface SelectorDefinition {
   selector: string;
@@ -37,11 +39,32 @@ export class AchievementsParser {
   parse(html: string, currentPage: number = 1): AchievementsData {
     const document = parseDocument(html);
 
+    // Every character page has the character's name in its frame, the ones that may not be viewed
+    // too. A page without it is a layout the selectors do not know, or another page altogether.
+    const name = this.querySelector(document, characterSelectors.NAME.selector);
+    if (!name || !this.getTextContent(name)) {
+      throw new ParseError('The page has no character name, so it is not a character page the parser knows');
+    }
+
+    // The name alone cannot tell the history from the profile, which Lodestone could send after a
+    // redirect. The achievement section can: it holds the total, the pager and the rows, and it is drawn
+    // even when the history is empty.
+    if (!this.querySelector(document, this.selectors.ROOT.selector)) {
+      throw new ParseError('The page has no achievement section, so it is not an achievement history');
+    }
+
     // 提取成就列表
     const achievements = this.extractAchievements(document);
 
     // 提取總成就數
     const totalAchievements = this.extractTotalAchievements(document);
+
+    // The page counts achievements but not one row could be read: it is not the layout these selectors
+    // know, and an empty history would be kept for two days. A total of 0, or no total at all, with no
+    // row is a history that really is empty, and stays an answer.
+    if (achievements.length === 0 && totalAchievements > 0) {
+      throw new ParseError(`The page counts ${totalAchievements} achievements but no row could be read`);
+    }
 
     // 提取成就點數
     const achievementPoints = this.extractAchievementPoints(document);
