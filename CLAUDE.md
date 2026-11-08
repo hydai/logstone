@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Cloudflare Workers application that provides a comprehensive Final Fantasy XIV Lodestone data API. It's a serverless API written in TypeScript that fetches and parses HTML from the official FFXIV Lodestone website, offering structured JSON responses for characters, free companies, achievements, and collections.
+This is a Cloudflare Workers application that provides a comprehensive Final Fantasy XIV Lodestone data API. It's a serverless API written in TypeScript that fetches and parses HTML from the official FFXIV Lodestone website, offering structured JSON responses for characters (also found by name), free companies, achievements, and collections.
 
 ## Development Commands
 
@@ -24,7 +24,10 @@ npm run tail
 # Generate TypeScript types
 npm run types
 
-# Type check (manual)
+# Run the tests (vitest; Lodestone is never contacted)
+npm test
+
+# Type check (manual); run it with the tests before every commit
 npx tsc --noEmit
 ```
 
@@ -32,11 +35,14 @@ npx tsc --noEmit
 
 ### Core Components
 
-1. **Entry Point** (`src/index.ts`): Handles HTTP routing, CORS, and KV caching
+1. **Entry Point** (`src/index.ts`): Handles HTTP routing, CORS, KV caching and error responses
    - Character routes: `/character/{id}`, `/character/{id}/classjob`, `/character/{id}/achievements`, `/character/{id}/minions`, `/character/{id}/mounts`
    - Free Company routes: `/freecompany/{id}`, `/freecompany/{id}/members`
-   - Data center support: All endpoints accept `?dc={na|jp}` parameter (defaults to `na`)
+   - Search route: `/search/character?name=&world=&page=` (never cached: no KV, no Cache API)
+   - Language site: All endpoints accept `?dc={na|jp}` parameter (defaults to `na`); `dc` picks which language site of Lodestone is read (`na` = English, `jp` = Japanese), so `jp` gives Japanese text
    - Cache TTL: 24 hours for basic data, 48 hours for achievements/collections
+   - Every success carries `FetchedAt`, the ISO time the data was fetched from Lodestone (a cache hit reports the time of the first fetch)
+   - Every failure is JSON `{ "error": <code> }`, sent by `errorResponse()` with the status from `errorStatus()` (`src/lib/http.ts`): 400 `bad_request` (wrong parameter), 403 `private` (Lodestone refuses the page), 404 `not_found` (Lodestone has no such character or Free Company; a search never gets 403 or 404, see Character Search), 502 `upstream` (Lodestone unreachable, answers another error status, or the page lacks what the parser looks for), 500 `internal` (a bug in the Worker). Only a disallowed Origin (plain text `Forbidden`, 403) and an unknown path (plain text `Not Found`, 404) are not JSON
    - CORS: Supports ff14.tw domains only
 
 2. **Parsers** (`src/parsers/`): Specialized HTML parsers using htmlparser2
@@ -45,13 +51,18 @@ npx tsc --noEmit
    - `achievements-parser.ts`: Achievement lists with pagination
    - `freecompany-parser.ts`: FC details including estate, reputation, focus
    - `freecompany-members-parser.ts`: FC member lists with pagination
-   - `minion-parser.ts`: Minion collection data
-   - `mount-parser.ts`: Mount collection data
+   - `minion-parser.ts`: Minion collection data (name and icon of each minion)
+   - `mount-parser.ts`: Mount collection data (name and icon of each mount)
+   - `search-parser.ts`: Character search results with pagination (each match with its Free Company)
 
-3. **Selectors** (`src/lib/lodestone-css-selectors/`): Modular CSS selector definitions
-   - Organized by data type (profile/, freecompany/, etc.)
+3. **Shared helpers** (`src/lib/`):
+   - `http.ts`: the error classes (`BadRequestError`, `UpstreamError`, `ParseError`) with `errorStatus()`, `fetchUpstreamText()` (every failure to talk to Lodestone becomes an `UpstreamError`), `cacheKey()` with `CACHE_VERSION`, `withFetchedAt()`, `parseDc()`, `parsePage()` and `MOBILE_USER_AGENT`
+   - `job-icons.ts`: job icon file name to job key, for `ActiveClassJob.Key` on the character endpoint
+
+4. **Selectors** (`src/lib/lodestone-css-selectors/`): Modular CSS selector definitions
+   - Organized by data type (profile/, freecompany/, search/, etc.)
    - Supports regex extraction, attribute selection, and nth-child selectors
-   - Cannot be modified (as per project constraints)
+   - Start from upstream (xivapi/lodestone-css-selectors) and keep the local changes listed under Constraints
 
 ### Key Implementation Details
 
@@ -59,8 +70,11 @@ npx tsc --noEmit
   - Uses Cloudflare KV namespace "LOGSTONE"
   - Basic data: 24-hour cache
   - Collections/achievements: 48-hour cache
-  - Cache keys include data center prefix (e.g., `character:jp:123456`)
-  - Cache status exposed via `X-Cache-Status` header
+  - Cache keys are `v2:<endpoint>:<dc>:<id>`, plus `:page<N>` for paged endpoints (e.g., `v2:character:jp:123456`, `v2:achievements:jp:123456:page2`)
+  - Every entry is written with an `expirationTtl` as long as it is served (at least 60 seconds, the least KV takes), so KV drops it once it is stale; a write KV refuses (e.g. past the free plan's 1,000 writes a day) is logged and the answer is still sent
+  - Raise `CACHE_VERSION` in `src/lib/http.ts` whenever what a parser returns changes in shape or content: entries under the old version are never read again and leave KV when they expire (entries written before v2 have no expiry and stay)
+  - Failures and character searches are never cached
+  - Cache status exposed via `X-Cache-Status` header (searches and errors have none)
 
 - **Parser Pattern**: All parsers follow consistent structure:
   - querySelector/querySelectorAll implementations
@@ -74,13 +88,22 @@ npx tsc --noEmit
   - No localhost exceptions in production
 
 - **Mount/Minion Parsing**:
-  - Names are extracted from tooltip URLs as identifiers
-  - Format: `Mount-{hash}` or `Minion-{hash}`
-  - Icons are properly extracted from img elements
+  - Fetched with a mobile User-Agent (`MOBILE_USER_AGENT`): only Lodestone's mobile layout writes the name of each row, the desktop layout just links to a tooltip
+  - `Name` is the real name (English for `dc=na`, Japanese for `dc=jp`) and `Icon` the image of the row
+  - A page that counts rows but shows none the parser can read is a `ParseError` (502), never an empty list that would be cached
+
+- **Character Search** (`/search/character`):
+  - Parameters: `name` (1 to 40 characters after trimming, counted by character rather than UTF-16 unit), `world` (empty, `_dc_<DataCenter>` or a world name, letters only), `page` (1 to 20, the most Lodestone shows) and `dc`; a value outside these rules, or any other parameter (Lodestone's own `worldname`, a typo), is a 400, so a misspelled filter never becomes a search of every world
+  - Reads `https://{dc}.finalfantasyxiv.com/lodestone/character/?q=&worldname=&page=` and parses it with `CharacterSearchParser`
+  - The pager ("Page 1 of 20" / "1ページ / 20ページ") and the total ("1000 Total" / "1000 件") are read as numbers, never by the words around them; a total may have thousands separators ("1,000" is 1000)
+  - An empty `Results` is an answer only when the page says that nobody matches, with `.parts__zero` (its notice) or with a total of 0: that is a 200 with `Results: []` and `Pagination` `{ Page: 1, PageTotal: 0, Total: 0 }`, whatever total the page states. A page with the window, no row the parser can read, no notice and a total that is missing or above 0 is a `ParseError` (502), so a changed layout is never reported as "nobody has that name"
+  - Lodestone answers a search with a 200 page even when nobody matches, so a 404 or a 403 for the search URL is Lodestone failing: a 502 `upstream`, logged like any 5xx, not the `not_found` or `private` of the other endpoints
 
 ## Testing
 
-Use the included `test.html` file for comprehensive API testing:
+`npm test` runs the vitest suite in `test/`. It never contacts Lodestone or the live Worker: the tests stub `fetch`, and the pages the parsers read are small hand-written copies of the real markup in `test/fixtures/`, with made-up names, IDs and avatars (never put a real player in a fixture). `test/helpers/env.ts` has the stand-ins for KV, requests and `fetch`.
+
+Use the included `test.html` file for manual API testing against a running Worker (it has no tab for character search):
 - Tabbed interface for different data types
 - Quick test buttons with sample IDs
 - Copy functionality for results
@@ -101,13 +124,13 @@ The `wrangler.toml` file contains:
 - Free Company details (all fields from nodestone)
 - Free Company members with pagination
 - Minion and mount collections
+- Character search by name and world, each match with its Free Company
 
 ### Not Implemented ❌
-- Search functionality (character/FC search)
+- Free Company search
 - Cross-world Linkshells (CWLS)
 - Linkshells
 - PvP Team details
-- Character attributes (STR, DEX, etc.)
 - Character equipment/gearset
 
 ## Common Patterns
@@ -127,7 +150,10 @@ The `wrangler.toml` file contains:
 
 ## Constraints
 
-- **CSS Selectors**: Cannot modify files in `lodestone-css-selectors/`
-- **Region**: Supports NA (North America) and JP (Japan) data centers
+- **CSS Selectors**: Start from upstream (`xivapi/lodestone-css-selectors`) and keep the local changes in `lodestone-css-selectors/`:
+  - `profile/classjob.json` is upstream's file at commit 245db29, byte for byte
+  - `profile/mount.json` and `profile/minion.json` are written for the mobile pages
+  - `search/character.json` is upstream's file at commit 245db29 plus `ENTRY.FREE_COMPANY` (the company's ID and name) and `TOTAL`
+- **Lodestone site**: `dc` picks which language site of Lodestone is read, `na` (English) or `jp` (Japanese); both show the same characters and Free Companies, whatever their data center
 - **Read-only**: No write operations to Lodestone
 - **CORS**: Must maintain security restrictions
