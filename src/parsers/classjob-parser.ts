@@ -48,7 +48,7 @@ export class ClassJobParser {
     const result: Record<string, JobData> = {};
 
     for (const jobName in this.selectors) {
-      if (this.selectors.hasOwnProperty(jobName) && jobName !== 'default') {
+      if (Object.prototype.hasOwnProperty.call(this.selectors, jobName) && jobName !== 'default') {
         try {
           const jobData = this.extractJobData(document, this.selectors[jobName]);
           if (jobData && Object.keys(jobData).length > 0) {
