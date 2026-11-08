@@ -182,11 +182,11 @@ export class ClassJobParser {
   private matchesSelector(element: Element, selector: string): boolean {
     const pseudoMatch = selector.match(/^([^:]+)(:nth-child\((\d+)\))?$/);
     if (!pseudoMatch) return false;
-    
+
     const [, baseSelector, , nthChild] = pseudoMatch;
-    
+
     let matches = false;
-    
+
     if (baseSelector.startsWith('.')) {
       const className = baseSelector.substring(1);
       matches = element.attribs?.class?.split(' ').includes(className) || false;
@@ -210,7 +210,7 @@ export class ClassJobParser {
     } else {
       matches = element.name === baseSelector;
     }
-    
+
     if (matches && nthChild) {
       const index = parseInt(nthChild);
       const parent = element.parent;
@@ -220,7 +220,7 @@ export class ClassJobParser {
         matches = elementIndex === index;
       }
     }
-    
+
     return matches;
   }
 
@@ -230,7 +230,7 @@ export class ClassJobParser {
 
   private getTextContent(element: Element): string {
     let text = '';
-    
+
     if (element.children) {
       for (const child of element.children) {
         if (child.type === 'text') {
@@ -240,7 +240,7 @@ export class ClassJobParser {
         }
       }
     }
-    
+
     return text.trim();
   }
 
@@ -248,7 +248,7 @@ export class ClassJobParser {
     try {
       const namedGroupRegex = regex.replace(/\?P<(\w+)>/g, '?<$1>');
       const match = new RegExp(namedGroupRegex).exec(value);
-      
+
       if (match) {
         if (match.groups && Object.keys(match.groups).length > 0) {
           return match.groups;
